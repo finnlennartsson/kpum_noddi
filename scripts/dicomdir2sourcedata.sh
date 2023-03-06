@@ -8,7 +8,7 @@ usage()
 Simple script to put patient DCMs in dicomdir into sourcedata folder using dcm2niix.
 sourcedata-folder
  |
- -- subj-$SubjectID
+ -- sub-\$sID
      |
      -- DCM-folders for each Series
 
