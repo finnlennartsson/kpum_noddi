@@ -70,7 +70,7 @@ docker run --name heudiconv_container \
            --volume $rawdatadir:/dataOut \
            nipy/heudiconv \
                -d /dataIn/sub-{subject}/*/*.dcm \
-               -f /code/KPUM_NODDI_heuristic.py \
+               -f convertall \
                -s ${sID} \
                -c none \
                -b \
