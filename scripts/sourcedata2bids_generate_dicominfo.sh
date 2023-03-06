@@ -53,7 +53,7 @@ fi
 userID=$(id -u):$(id -g)
 
 ###   Get docker images:   ###
-docker pull nipy/heudiconv:latest
+docker pull nipy/heudiconv:0.11.16
 
 ################ PROCESSING ################
 
