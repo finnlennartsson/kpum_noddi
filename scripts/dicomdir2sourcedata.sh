@@ -5,7 +5,9 @@ usage()
 {
   base=$(basename "$0")
   echo "usage: $base patient [options]
+
 Simple script to put patient DCMs in dicomdir into sourcedata folder using dcm2niix.
+
 sourcedata-folder
  |
  -- sub-\$sID
@@ -28,7 +30,7 @@ Options:
 
 [ $# -ge 1 ] || { usage; }
 command=$@
-Patient=$1
+sID=$1
 shift
 
 # Defaults
@@ -58,7 +60,9 @@ if [ -d $sourcedata/sub-$sID ]; then
     echo "Folder $sourcedata/sub-$sID already exists => NO transfer"
     echo
 else
+    mkdir -p $sourcedata/sub-$sID
     echo "Transfer DCMs into $sourcedata/sub-$sID"
     echo
-    dcm2niix -b o -r y -w 1 -v 1 -o $sourcedata -f sub-$sID/s%2s_%d/%d_%5r.dcm $dicomdir/$sID
+    # FL 2023-03-06 : had to change from default search depth to 6 (-d 6)
+    dcm2niix -d 6 -b o -r y -w 1 -v 1 -o $sourcedata -f sub-$sID/s%2s_%d/%d_%5r.dcm $dicomdir/$sID
 fi
