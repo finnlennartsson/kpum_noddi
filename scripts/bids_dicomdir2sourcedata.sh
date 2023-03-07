@@ -19,7 +19,7 @@ Arguments:
   patient			Patient's DICOM-folder in format $SubjectID_$SessionID_XXXX (e.g. 002_MR1_XXXX or 024_MR2_YYYY) 
 Options:
   -sourcedata			Output sourcedata folder (default: sourcedata)
-  -DCM		       		Input DCM-folder (default: DICOM_KPUM_NODDI)
+  -DCM		       		Input DCM-folder (default: dicomdir)
   -h / -help / --help           Print usage.
 "
   exit;
@@ -43,7 +43,7 @@ fi
 # Defaults
 studydir=$PWD
 sourcedatafolder=$studydir/sourcedata;
-DCMfolder=$studydir/DICOM_KPUM_NODDI;
+DCMfolder=$studydir/dicomdir;
 
 # Read arguments
 while [ $# -gt 0 ]; do
