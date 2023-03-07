@@ -70,5 +70,5 @@ if [ -d $sourcedatafolder/sub-$SubjectID/ses-$SessionID ]; then
 else
     echo "Transfer DCMs into $sourcedatafolder/sub-$SubjectID/ses-$SessionID"
     echo
-    dcm2niix -b o -r y -w 1 -v 1 -o $sourcedatafolder -f sub-$SubjectID/ses-$SessionID/s%2s_%d/%d_%5r.dcm $DCMfolder/$Patient
+    dcm2niix -d 8 -b o -r y -w 1 -v 1 -o $sourcedatafolder -f sub-$SubjectID/ses-$SessionID/s%2s_%d/%d_%5r.dcm $DCMfolder/$Patient
 fi
