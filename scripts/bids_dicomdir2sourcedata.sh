@@ -68,7 +68,7 @@ if [ -d $sourcedatafolder/sub-$SubjectID/ses-$SessionID ]; then
     echo "Folder $sourcedatafolder/sub-$SubjectID/ses-$SessionID already exists => NO transfer"
     echo
 else
-if [ ! -d $sourcedatafolder/sub-$SubjectID/ses-$SessionID ]; then mkdir $sourcedatafolder/sub-$SubjectID/ses-$SessionID; fi
+if [ ! -d $sourcedatafolder/sub-$SubjectID/ses-$SessionID ]; then mkdir -p $sourcedatafolder/sub-$SubjectID/ses-$SessionID; fi
     echo "Transfer DCMs into $sourcedatafolder/sub-$SubjectID/ses-$SessionID"
     echo
     dcm2niix -d 8 -b o -r y -w 1 -v 1 -o $sourcedatafolder -f sub-$SubjectID/ses-$SessionID/s%2s_%d/%d_%5r.dcm $DCMfolder/$Patient
