@@ -42,8 +42,8 @@ fi
 
 # Defaults
 studydir=$PWD
-PMRfolder=$studydir/sourcedata;
-DoBfolder=$studydir/DICOM_KPUM_NODDI;
+sourcedatafolder=$studydir/sourcedata;
+DCMfolder=$studydir/DICOM_KPUM_NODDI;
 
 # Read arguments
 while [ $# -gt 0 ]; do
