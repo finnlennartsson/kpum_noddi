@@ -4,13 +4,12 @@
 usage()
 {
   base=$(basename "$0")
-  echo "usage: $base sID [options]
-Conversion of DCMs in /sourcedata into NIfTIs in /rawdata
-1. NIfTI-conversion to BIDS-compliant /rawdata folder
-2. validation of BIDS dataset
+  echo "usage: $base sID ssID [options]
+Pre-script to generate .heudiconv files in /rawdata for subsequent NIfTI-conversion to BIDS /rawdata folder
 
 Arguments:
   sID				Subject ID (e.g. 001) 
+  ssID                       	Session ID (e.g. MR2)
 Options:
   -h / -help / --help           Print usage.
 "
@@ -19,11 +18,12 @@ Options:
 
 ################ ARGUMENTS ################
 
-[ $# -ge 1 ] || { usage; }
+[ $# -ge 2 ] || { usage; }
 command=$@
 sID=$1
+ssID=$2
+shift; shift
 
-shift
 while [ $# -gt 0 ]; do
     case "$1" in
 	-h|-help|--help) usage; ;;
@@ -39,7 +39,7 @@ studydir=`pwd`
 rawdatadir=$studydir/rawdata;
 sourcedatadir=$studydir/sourcedata;
 scriptname=`basename $0 .sh`
-logdir=$studydir/derivatives/logs/sub-${sID}
+logdir=$studydir/derivatives/logs/sub-${sID}/ses-${ssID}
 
 if [ ! -d $rawdatadir ]; then mkdir -p $rawdatadir; fi
 if [ ! -d $logdir ]; then mkdir -p $logdir; fi
@@ -53,7 +53,7 @@ fi
 userID=$(id -u):$(id -g)
 
 ###   Get docker images:   ###
-docker pull nipy/heudiconv:0.11.16  # should be changed to :latest when appropriate
+docker pull nipy/heudiconv:latest  # should be changed to :latest when appropriate
 
 ################ PROCESSING ################
 
@@ -69,12 +69,13 @@ docker run --name heudiconv_container \
            --volume $sourcedatadir:/dataIn:ro \
            --volume $rawdatadir:/dataOut \
            nipy/heudiconv \
-               -d /dataIn/sub-{subject}/*/*.dcm \
+               -d /dataIn/sub-{subject}/ses-{session}/*/*.dcm \
                -f convertall \
                -s ${sID} \
+	       -ss ${ssID} \
                -c none \
                -b \
                -o /dataOut \
                --overwrite \
-           > $logdir/sub-${sID}_$scriptname.log 2>&1 
+           > $logdir/sub-${sID}_ses-${ssID}_$scriptname.log 2>&1 
            
