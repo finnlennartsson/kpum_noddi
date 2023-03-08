@@ -41,7 +41,7 @@ else
     heuristicfile=$codedir/heudiconv_heuristics/kpum_noddi.py
 fi
 
-logdir=${studydir}/derivatives/preprocessing_logs/sub-${sID}/ses-${ssID}
+logdir=${studydir}/derivatives/logs/sub-${sID}/ses-${ssID}
 scriptname=`basename $0 .sh`
 
 # Read arguments
@@ -54,6 +54,14 @@ while [ $# -gt 0 ]; do
     esac
     shift
 done
+
+################ START ################
+
+echo Conversion of DICOMs to BIDS and validation of BIDS dataset
+echo Subject ID = $sID
+echo Session ID = $ssID
+echo heuristics file = $heuristicfile
+echo 
 
 if [ ! -d $rawdatadir ]; then mkdir -p $rawdatadir; fi
 if [ ! -d $logdir ]; then mkdir -p $logdir; fi
@@ -75,11 +83,6 @@ docker pull bids/validator:latest
 # Get location and file for heuristic file
 heuristicdir=`dirname $heuristicfile`
 heuristicfile=`basename $heuristicfile`
-
-echo Conversion of DICOMs to BIDS and validation of BIDS dataset
-echo Subject ID = $sID
-echo Session ID = $ssID
-echo heuristics file = $heuristicfile
 
 # Run heudiconv with docker container
 docker run --name heudiconv_container \
