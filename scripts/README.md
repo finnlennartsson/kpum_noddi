@@ -2,21 +2,31 @@ The repository can go inside the `/code` folder within of a [BIDS](https://bids.
 
 # Original DICOMs
 
-Original DICOMs are exported from the SECTRA PACS 
+Original DICOMs are exported from the SECTRA PACS
 
-# Data organisation - BIDS conversion
+You can use the "Minimal Anonymisation Routine"
 
-Bash and python scripts to convert DICOM data into BIDS-organised NIfTI data, in /rawdata.
+# DICOM => BIDS conversion
 
-All scripts working on the BIDS rawdata have prefix bids_
+Bash and python scripts to convert DICOM data into BIDS-organised NIfTI data, in `studydir/rawdata`.
+All scripts working on the BIDS rawdata have prefix `bids_`
 
 To complete the conversion:
-
-Run script `bids_dicomdir2sourcedata.sh`
-This prepares the DICOMS by re-naming and organizing them into /sourcedata
-
-Run script `bids_sourcedata2bids_generate_dicominfo.sh`
-This converts the dicoms in /sourcedata to BIDS-organised NIfTIs in /rawdatausing the heudiconv routine.
-Run BIDS validator
+1. Run script `bids_dicomdir2sourcedata.sh`
+This prepares the DICOMS by re-naming and organizing them into `/sourcedata`
+2. Run script `bids_sourcedata2bids_generate_dicominfo.sh`
+This converts the dicoms in /sourcedata to BIDS-organised NIfTIs in `/rawdata` using the heudiconv routine.
+3. Run script `bids_sourcedata2bids.sh`
+Performs the actual conversion. Also runs the BIDS validator
 
 # Raw data quality control (QC)
+1. Run script `bids_QC_visualize_rawdata.sh`
+
+# Diffusion pipeline
+Bash scripts to process dMRI data in `derivatives`
+All scripts working on the BIDS rawdata have prefix `dmri_`
+
+1. Run script `dmri_prepare_pipeline.sh`
+This prepares the pipeline by copying the relavant files into 
+2. Run script `dmri_preprocess.sh`
+
