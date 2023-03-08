@@ -38,8 +38,10 @@ dMRI_rawdata_visualisation ()
     else #is dwi file
 	# Launch viewer and load all images
 	mrconvert -quiet -fslgrad $filedir/$filebase.bvec $filedir/$filebase.bval $file tmp.mif
-	shells=`mrinfo -shell_bvalues tmp.mif`;
-	for shell in $shells; do
+	shell_bvalues=`mrinfo -shell_bvalues tmp.mif`;
+	shell_nbs=`mrinfo -shell_sizes tmp.mif`;
+	echo b-values $shell_bvalues with dMRI-volumes $shell_nbs
+	for shell in $shell_bvalues; do
 	    echo Inspecting shell with b-value=$shell
 	    if [ $shell == 0 ]; then echo b0 have this volume indices; mrinfo -shell_indices tmp.mif; fi
 	    dwiextract -quiet -shell $shell tmp.mif - | mrview - -mode 2 
