@@ -94,7 +94,7 @@ def infotodict(seqinfo):
         if ('DKI_2.5mm_NODDI_73dir' in s.protocol_name) and ('ORIGINAL' in s.image_type):
             info[dki_ap].append(s.series_id) # append if multiple series meet criteria
         # DTI Clinical scan (in TRA plane)
-        if ('DTI_2.5mm_iso' in s.protocol_name) and ('ORIGINAL' in s.image_type):
+        if ('DTI_2.5mm_iso' in s.protocol_name) and ('ORIGINAL' in s.image_type) and ('MOSAIC' in s.image_type):
             info[dti_ap].append(s.series_id) # append if multiple series meet criteria
                        
     return info

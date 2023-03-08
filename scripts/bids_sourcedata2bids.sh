@@ -67,7 +67,7 @@ fi
 userID=$(id -u):$(id -g)
 
 ###   Get docker images:   ###
-docker pull nipy/heudiconv:latest
+docker pull nipy/heudiconv:v0.11.6 #latest
 docker pull bids/validator:latest
 
 ###   Extract DICOMs into BIDS:   ###
@@ -75,6 +75,11 @@ docker pull bids/validator:latest
 # Get location and file for heuristic file
 heuristicdir=`dirname $heuristicfile`
 heuristicfile=`basename $heuristicfile`
+
+echo Conversion of DICOMs to BIDS and validation of BIDS dataset
+echo Subject ID = $sID
+echo Session ID = $ssID
+echo heuristics file = $heuristicfile
 
 # Run heudiconv with docker container
 docker run --name heudiconv_container \
@@ -86,7 +91,7 @@ docker run --name heudiconv_container \
 	   --volume $heuristicdir:/heuristic \
            --volume $dcmdir:/dataIn:ro \
            --volume $rawdatadir:/dataOut \
-           nipy/heudiconv \
+           nipy/heudiconv:v0.11.6 \
                -d /dataIn/sub-{subject}/ses-{session}/*/*.dcm \
                -f /heuristic/$heuristicfile \
                -s ${sID} \
@@ -99,7 +104,7 @@ docker run --name heudiconv_container \
            
 # heudiconv makes files read only
 #    We need some files to be writable, eg for dHCP pipelines
-sudo chmod -R u+wr,g+wr $rawdatadir
+chmod -R u+wr,g+wr $rawdatadir
 
 
 # We run the BIDS-validator:
