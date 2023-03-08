@@ -31,6 +31,7 @@ def infotodict(seqinfo):
     t1wmprage = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-MPRAGE_run-{item:01d}_T1w')
     t2starw = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-t2star_run-{item:01d}_T2starw')
     swi = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-swi_run-{item:01d}_T2starw')
+    swi_mnip = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-swi_rec-mnip_run-{item:01d}_T2starw')
     t2wtraclin = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-tra_run-{item:01d}_T2w')
     flair = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_run-{item:01d}_FLAIR')
     
@@ -38,7 +39,7 @@ def infotodict(seqinfo):
     dki_ap = create_key('sub-{subject}/{session}/dwi/sub-{subject}_{session}_acq-dki_dir-AP_run-{item:01d}_dwi')
     dti_ap = create_key('sub-{subject}/{session}/dwi/sub-{subject}_{session}_acq-dti_dir-AP_run-{item:01d}_dwi')
 
-    info = {t1wmprage: [], t2starw: [], swi:[], t2wtraclin: [], flair: [], dki_ap: [], dti_ap: []}
+    info = {t1wmprage: [], t2starw: [], swi: [], swi_mnip: [], t2wtraclin: [], flair: [], dki_ap: [], dti_ap: []}
     last_run = len(seqinfo)
 
     for idx, s in enumerate(seqinfo):
@@ -68,8 +69,6 @@ def infotodict(seqinfo):
         """
 
 
-        info = {t1wmprage: [], t2starw: [], swi:[], t2wtraclin: [], flair: [], dki_ap: [], dti_ap: []}
-
         # ANATOMY
         # 3D T1w Clinical scan (in collected in SAG plane)
         if ('MPRAGE' in s.protocol_name) and ('ORIGINAL' in s.image_type): 
@@ -79,20 +78,23 @@ def infotodict(seqinfo):
             info[t2wtraclin].append(s.series_id) # assign if a single series meets
         # T2starw Clinical scan (in COR plane)
         if ('T2starW_COR' in s.protocol_name) and ('ORIGINAL' in s.image_type): 
-            info[t2wcorclin].append(s.series_id) # append if multiple series meet criteria
+            info[t2starw].append(s.series_id) # append if multiple series meet criteria
         # SWI Clinical scan (in TRA plane)
-        if ('SWI_TRA' in s.protocol_name) and ('ORIGINAL' in s.image_type): 
-            info[t2wcorclin].append(s.series_id) # append if multiple series meet criteria
+        if ('SWI_TRA' in s.protocol_name) and ('ORIGINAL' in s.image_type) and ('SWI' in s.image_type): 
+            info[swi].append(s.series_id) # append if multiple series meet criteria
+        # SWI Clinical scan (in TRA plane)
+        if ('SWI_TRA' in s.protocol_name) and ('ORIGINAL' in s.image_type) and ('MNIP' in s.image_type): 
+            info[swi_mnip].append(s.series_id) # append if multiple series meet criteria
         # FLAIR
         if ('FLAIR' in s.protocol_name) and ('ORIGINAL' in s.image_type): # takes normalized images
             info[flair].append(s.series_id) # append if multiple series meet criteria
         
         # DIFFUSION
         # DKI NODDI (dir-AP)
-        if ('DKI_2.5mm_NODDI_73dir' in s.series_description) and ('ORIGINAL' in s.image_type):
+        if ('DKI_2.5mm_NODDI_73dir' in s.protocol_name) and ('ORIGINAL' in s.image_type):
             info[dki_ap].append(s.series_id) # append if multiple series meet criteria
         # DTI Clinical scan (in TRA plane)
-        if ('DTI_2.5mm' in s.series_description) and ('ORIGINAL' in s.image_type):
+        if ('DTI_2.5mm_iso' in s.protocol_name) and ('ORIGINAL' in s.image_type):
             info[dti_ap].append(s.series_id) # append if multiple series meet criteria
                        
     return info
