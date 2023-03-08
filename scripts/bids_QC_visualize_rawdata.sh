@@ -3,6 +3,9 @@
 # Script for QC eye-balling of images in a BIDS rawdata folder given from a heudiconv's "scans.tsv"-file
 # Creates (unless already present) a session_QC.tsv file for QC purposes
 #
+
+################ SUB-FUNCTIONS ################
+
 usage()
 {
   base=$(basename "$0")
@@ -38,7 +41,7 @@ dMRI_rawdata_visualisation ()
 	shells=`mrinfo -shell_bvalues tmp.mif`;
 	for shell in $shells; do
 	    echo Inspecting shell with b-value=$shell
-	    if [ $shell == 5 ]; then echo b0 have this volume indices; mrinfo -shell_indices tmp.mif; fi
+	    if [ $shell == 0 ]; then echo b0 have this volume indices; mrinfo -shell_indices tmp.mif; fi
 	    dwiextract -quiet -shell $shell tmp.mif - | mrview - -mode 2 
 	done
 	rm tmp.mif
@@ -69,6 +72,8 @@ while [ $# -gt 0 ]; do
     shift
 done
 
+################ START ################
+
 # Go to rawdata dir
 cd $rawdatadir/sub-$sID/ses-$ssID
 
@@ -76,13 +81,13 @@ cd $rawdatadir/sub-$sID/ses-$ssID
 if [ ! -f session_QC.tsv ]; then
     {
 	echo "Creating session_QC.tsv file from $tsvfile"
-	echo -e "participant_id\tsession_id\tfilename\tqc_pass_fail\tqc_signature\tdMRI_dwiAP\tdMRI_vol_for_b0AP\tdMRI_vol_for_b0PA\tsMRI_use_for_5ttgen_mcrib" > session_QC.tsv
+	echo -e "participant_id\tsession_id\tfilename\tqc_pass_fail\tqc_signature\tdMRI_DKI\tdMRI_DTI" > session_QC.tsv
 
 	read;
 	while IFS= read -r line
 	do
 	    file=`echo "$line" | awk '{ print $1 }'`
-	    echo -e "sub-$sID\tses-$ssID\t$file\t0/1\tFL/JB\t-\t-\t-\t-" >> session_QC.tsv
+	    echo -e "sub-$sID\tses-$ssID\t$file\t0/1\tFL/JB\t-\t-" >> session_QC.tsv
 	done
     } < "$tsvfile"
 fi 
