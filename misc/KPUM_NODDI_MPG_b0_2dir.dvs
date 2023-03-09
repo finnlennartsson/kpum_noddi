@@ -1,0 +1,7 @@
+#dTV-II MPG description file (not used in earlier dTV)
+[directions=2]
+CoordinateSystem = xyz
+Normalisation = none
+Comment = if b-value in UI is 2000, b=0(2dir) will be scanned. 
+Vector[0] =( 0.000,  0.000,  0.000) 
+Vector[1] =( 0.000,  0.000,  0.000) 
