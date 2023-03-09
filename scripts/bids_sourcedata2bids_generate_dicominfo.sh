@@ -53,7 +53,7 @@ fi
 userID=$(id -u):$(id -g)
 
 ###   Get docker images:   ###
-docker pull nipy/heudiconv:latest  # should be changed to :latest when appropriate
+docker pull nipy/heudiconv:v0.11.6  # should be changed to :latest when appropriate
 
 ################ PROCESSING ################
 
@@ -68,7 +68,7 @@ docker run --name heudiconv_container \
 	   --volume $codedir:/code \
            --volume $sourcedatadir:/dataIn:ro \
            --volume $rawdatadir:/dataOut \
-           nipy/heudiconv \
+           nipy/heudiconv:v0.11.6 \
                -d /dataIn/sub-{subject}/ses-{session}/*/*.dcm \
                -f convertall \
                -s ${sID} \
