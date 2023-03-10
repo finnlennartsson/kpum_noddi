@@ -6,7 +6,7 @@ Original DICOMs are exported from the SECTRA PACS
 
 You can use the "Minimal Anonymisation Routine"
 
-# DICOM => BIDS conversion
+# DICOM to BIDS conversion
 
 Bash and python scripts to convert DICOM data into BIDS-organised NIfTI data, in `studydir/rawdata`.
 All scripts working on the BIDS rawdata have prefix `bids_`
