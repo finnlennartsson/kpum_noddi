@@ -99,7 +99,7 @@ for file in $dwi $mask; do
 	if [ $file == $dwi ]; then
 	    mrconvert -quiet -json_export $outdir/$filebase.json -export_grad_fsl $outdir/$filebase.bvec $outdir/$filebase.bval $file $outdir/$filebase.nii # Needs to be in .nii-format
 	else # is $mask
-	    mrconvert -quiet $file $outdir/$filebase.nii # Needs to be in .nii-format
+	    mrconvert -quiet -json_export $outdir/$filebase.json $file $outdir/$filebase.nii # Needs to be in .nii-format
 	fi	    
     fi
 
