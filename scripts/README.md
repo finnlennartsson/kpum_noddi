@@ -29,4 +29,5 @@ All scripts working on the BIDS rawdata have prefix `dmri_`
 1. Run script `dmri_prepare_pipeline.sh`
 This prepares the pipeline by copying the relavant files into 
 2. Run script `dmri_preprocess.sh`
+3. Run script `dmri_dtidki.sh`
 
