@@ -24,5 +24,6 @@ if __name__ == '__main__':
         slicebase = os.path.basename(in_slice_)
         slicedir = os.path.dirname(in_slice_)
         out_slice_ = os.path.join(slicedir, f'ANONYMOUS_{slicebase}') # writing to file ANONYMOUS_slicebase
-        anonymize_dicom(in_slice_, out_slice_)
+        #anonymize_dicom(in_slice_, in_slice_) # write to the same file, i.e. anonymizing the file directly
+        anonymize_dicom(in_slice_, out_slice_) # write to file defined by out_slice 
         
