@@ -17,7 +17,7 @@ This prepares the DICOMS by re-naming and organizing them into `/sourcedata_non-
 2. Run script `bids_sourcedata2rawdata_generate_dicominfo.sh`  
 This converts the dicoms in /sourcedata to BIDS-organised NIfTIs in `/rawdata` using the heudiconv routine.
 3. Run script `bids_sourcedata2rawdata.sh`  
-Performs the actual conversion. Also runs the BIDS validator
+Performs the actual conversion using the heudiconv routine. Also runs the BIDS validator
 
 # Raw data quality control (QC)
 1. Run script `bids_QC_visualize_rawdata.sh`
@@ -26,7 +26,7 @@ Performs the actual conversion. Also runs the BIDS validator
 Bash scripts to process dMRI data in `derivatives`
 All scripts working on the BIDS rawdata have prefix `dmri_`
 
-1. Run script `dmri_prepare_pipeline.sh`
+1. Run script `dmri_prepare_pipeline.sh`  
 This prepares the pipeline by copying the relavant files into 
 2. Run script `dmri_preprocess.sh`
 3. Run script `dmri_dtidki.sh`
