@@ -70,7 +70,7 @@ output=$sourcedata_nonanonym;
 if [ ! -d $output ]; then mkdir -p $output; fi
 
 echo "Organizing DCM-input in $DCMfolder into non-anonymized folder $output"
-dcm2niix -d 8 -b o -r y -w 0 -o $output -f s%2s_%d/%d_%5r.dcm $DCMfolder
+dcm2niix -d 8 -b o -r y -w 1 -o $output -f s%2s_%d/%d_%5r.dcm $DCMfolder
 
 ##################################################################################
 # 2. Anonymize by re-cursively looking in $sourcedata_nonanonym for all folders sub-$sID/ses-$ssID/*
