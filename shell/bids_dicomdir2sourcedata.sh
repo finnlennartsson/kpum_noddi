@@ -74,9 +74,10 @@ dcm2niix -d 8 -b o -r y -w 1 -o $output -f s%2s_%d/%d_%5r.dcm $DCMfolder
 
 ##################################################################################
 # 2. Anonymize by re-cursively looking in $sourcedata_nonanonym for all folders sub-$sID/ses-$ssID/*
-# define anonymizing python-script
 
+# define anonymizing python-script
 pythonfile=$codedir/../python/anonymize_dicoms.py 
+
 if [ -f $pythonfile ]; then
     #conda activate py38 # Currently installed with pip here
     output=$sourcedatafolder/sub-$sID/ses-$ssID; # update output-folder
