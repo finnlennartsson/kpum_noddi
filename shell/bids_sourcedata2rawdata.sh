@@ -106,8 +106,8 @@ docker run --name heudiconv_container \
            > ${logdir}/sub-${sID}_ses-${ssID}_$scriptname.log 2>&1 
            
 # heudiconv makes files read only
-#    We need some files to be writable, eg for dHCP pipelines
-chmod -R u+wr,g+wr $rawdatadir
+#    We make sure they are readable for everyone
+chmod -R u+r,g+r,o+r $rawdatadir
 
 
 # We run the BIDS-validator:
