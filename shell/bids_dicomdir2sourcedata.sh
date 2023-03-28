@@ -20,7 +20,7 @@ Two-step processes
 
 Arguments:
   DCMparentfolder		Parent DICOM-folder (e.g. dicomdir)
-  DCMdatafolder			Patient's DICOM-folder within Parent DICOM-folder (e.g. 001_MR1_XXXX/DI)
+  DCMdatafolder			Patient's DICOM-folder within Parent DICOM-folder (e.g. 002_MR1_8193760_20210512/DICOM_fromPACS)
   sID				Patient's Subject ID (e.g. 001)
   ssID				Patient's Session ID (e.g. MR1)
 Options:
