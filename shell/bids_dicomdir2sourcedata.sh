@@ -15,11 +15,12 @@ sourcedata-folder
          --DCM-folders for each Series
 
 Two-step processes
-1. Data is copied and with file and folder names rearranged and renamed into /sourcedata_non-anonym
-2. Data anonymized using Python-script $codedir/python/anonymize_dicoms.py and copied into /sourcedata 
+1. Data is copied and with file and folder names rearranged and renamed into "DCMparenfolder"/sourcedata_non-anonym
+2. Data anonymized using Python-script "codedir"/python/anonymize_dicoms.py and moved/copied into "studydir"/sourcedata 
 
 Arguments:
-  DCMfolder			Patient's DICOM-folder (e.g. dicomdir/001_MR1_XXXX)
+  DCMparentfolder		Parent DICOM-folder (e.g. dicomdir)
+  DCMdatafolder			Patient's DICOM-folder within Parent DICOM-folder (e.g. 001_MR1_XXXX/DI)
   sID				Patient's Subject ID (e.g. 001)
   ssID				Patient's Session ID (e.g. MR1)
 Options:
@@ -33,12 +34,14 @@ Options:
 
 [ $# -ge 1 ] || { usage; }
 command=$@
-DCMfolder=$1
-sID=$2
-ssID=$3
-shift; shift; shift
+DCMparentfolder=$1
+DCMdatafolder=$2
+sID=$3
+ssID=$4
+shift; shift; shift; shift
 
 studydir=$PWD
+
 # Defaults
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 sourcedatafolder=$studydir/sourcedata;
@@ -54,17 +57,18 @@ while [ $# -gt 0 ]; do
     shift
 done
 
+DCMfolder=$DCMparentfolder/$DCMdatafolder
+
 ################ START ################
 
-echo Transferring $Patient from DoB-folder $DCMfolder to sourcedata-folder $sourcedatafolder;
+echo Transferring $Patient from DoB-folder $DCMfolder to sourcedata-folder $sourcedatafolder/sub-$sID/ses-$ssID;
 echo sID = $sID
 echo ssID = $ssID;
 
 ##################################################################################
 # 1. Re-arrange DCM into sourcedata-folder in a BIDS-like structure using dcm2niix
 
-DCMsourcedata_dirlevel=`dirname $DCMfolder`
-sourcedata_nonanonym=$DCMsourcedata_dirlevel/sourcedata_non-anonym/sub-$sID/ses-$ssID;
+sourcedata_nonanonym=$DCMparentfolder/sourcedata_non-anonym/sub-$sID/ses-$ssID;
 output=$sourcedata_nonanonym;
 
 if [ ! -d $output ]; then mkdir -p $output; fi
@@ -88,11 +92,11 @@ if [ -f $pythonfile ]; then
 	if [ ! -d $output/$seriebase ]; then mkdir -p $output/$seriebase; fi
 	# go and do anonymization
 	cd $serie
-	python3 $pythonfile # will write anonoymized files
+	python3 $pythonfile # will write anonoymized files with prefix ANONYMIZED_
 	cd $currdir
 	# and transfer to $output/$seriebase
-	mv $serie/ANONYMIZED_*.dcm $output/$seriebase/.
-	rename 's/ANONYMIZED\_//g' $output/$seriebase/ANONYMIZED_*.dcm
+	mv $serie/ANONYMIZED_*.dcm $output/$seriebase/. # move anonymized files
+	rename 's/ANONYMIZED\_//g' $output/$seriebase/ANONYMIZED_*.dcm # and take away ANONYMIZED_ prefix
     done
     echo "All DCMs anonymized. Final output in $output";
 else
