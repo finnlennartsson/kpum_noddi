@@ -19,7 +19,7 @@ Two-step processes
 2. Data anonymized using Python-script "codedir"/python/anonymize_dicoms.py and moved/copied into "studydir"/sourcedata 
 
 Arguments:
-  DCMparentfolder		Parent DICOM-folder (e.g. dicomdir)
+  DCMparentfolder		Parent DICOM-folder (e.g. rawdicomdir)
   DCMdatafolder			Patient's DICOM-folder within Parent DICOM-folder (e.g. 002_MR1_8193760_20210512/DICOM_fromPACS)
   sID				Patient's Subject ID (e.g. 001)
   ssID				Patient's Session ID (e.g. MR1)
@@ -59,11 +59,26 @@ done
 
 DCMfolder=$DCMparentfolder/$DCMdatafolder
 
+logdir=${studydir}/derivatives/logs/sub-${sID}/ses-${ssID}
+script=`basename $0 .sh`
+
+
 ################ START ################
 
 echo Transferring $Patient from DoB-folder $DCMfolder to sourcedata-folder $sourcedatafolder/sub-$sID/ses-$ssID;
 echo sID = $sID
 echo ssID = $ssID;
+echo
+
+if [ ! -d $logdir ]; then mkdir -p $logdir; fi
+
+timestamp=`date`
+echo On $timestamp,
+echo executing: $codedir/$script.sh $command > ${logdir}/sub-${sID}_ses-${ssID}_$script.log 2>&1
+echo "" >> ${logdir}/sub-${sID}_ses-${ssID}_$script.log 2>&1
+echo "Printout $script.sh" >> ${logdir}/sub-${sID}_ses-${ssID}_$script.log 2>&1
+cat $codedir/$script.sh >> ${logdir}/sub-${sID}_ses-${ssID}_$script.log 2>&1
+echo
 
 ##################################################################################
 # 1. Re-arrange DCM into sourcedata-folder in a BIDS-like structure using dcm2niix
