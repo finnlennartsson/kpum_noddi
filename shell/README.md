@@ -2,9 +2,7 @@ The repository can go inside the `/code` folder within of a [BIDS](https://bids.
 
 # Original DICOMs
 
-Original DICOMs are exported from the SECTRA PACS
-
-You can use the "Minimal Anonymisation Routine"
+Original DICOMs are exported from the SECTRA PACS using the "Minimal Anonymisation Routine" when exporting, or directly from the MR-scanner console (saved on DVD). 
 
 # DICOM to BIDS conversion
 
