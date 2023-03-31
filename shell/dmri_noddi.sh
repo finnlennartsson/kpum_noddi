@@ -113,11 +113,10 @@ done
 cd $datadir/dwi/noddi
 
 echo Running NODDI calculations
-noddithreads=6;
 noddiparams=noddi-default #this is using the default noddi model
 
 if [ $noddiparams == "noddi-default" ]; then
-    matlab -nodesktop -nosplash -r "clc; clear all; addpath(genpath('$HOME/Software/NODDI_toolbox_v1.05/')); addpath('$HOME/Software/nifti_matlab/matlab/'); CreateROI('dwi_preproc_inorm.nii', 'mask.nii', 'NODDI_mask.mat'); protocol = FSL2Protocol('dwi_preproc_inorm.bval', 'dwi_preproc_inorm.bvec'); noddi = MakeModel('WatsonSHStickTortIsoV_B0'); batch_fitting('NODDI_mask.mat', protocol, noddi, 'FittedParams_sub-${sID}_ses-${ssID}_desc-$noddiparams.mat', $noddithreads); SaveParamsAsNIfTI('FittedParams_sub-${sID}_ses-${ssID}_desc-$noddiparams.mat', 'NODDI_mask.mat', 'mask.nii', 'sub-${sID}_ses-${ssID}_desc-$noddiparams'); exit"
+    matlab -nodesktop -nosplash -r "clc; clear all; addpath(genpath('$HOME/Software/NODDI_toolbox_v1.05/')); addpath('$HOME/Software/nifti_matlab/matlab/'); CreateROI('dwi_preproc_inorm.nii', 'mask.nii', 'NODDI_mask.mat'); protocol = FSL2Protocol('dwi_preproc_inorm.bval', 'dwi_preproc_inorm.bvec'); noddi = MakeModel('WatsonSHStickTortIsoV_B0'); batch_fitting('NODDI_mask.mat', protocol, noddi, 'FittedParams_sub-${sID}_ses-${ssID}_desc-$noddiparams.mat', $threads); SaveParamsAsNIfTI('FittedParams_sub-${sID}_ses-${ssID}_desc-$noddiparams.mat', 'NODDI_mask.mat', 'mask.nii', 'sub-${sID}_ses-${ssID}_desc-$noddiparams'); exit"
 fi
 
 cd $currdir
