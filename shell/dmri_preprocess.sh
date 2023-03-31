@@ -143,7 +143,10 @@ if [ -f $sessionfile ]; then
 		volb0PA=`echo "$line" | awk '{ print $9 }'` #(dMRI_vol_for_b0PA = 9th column)
 		if [ ! $volb0PA == "-" ]; then
 		    if [ ! -f $datadir/dwi/preproc/topup/b0PA.mif.gz ]; then
-			mrconvert $datadir/$filedir/$filebase.nii.gz -json_import $datadir/$filedir/$filebase.json $datadir/dwi/preproc/topup/b0PA.mif.gz
+			#Finn 2023-03-31: change to extract one volb0PA, which was not done in OLD
+			mrconvert $datadir/$filedir/$filebase.nii.gz -json_import $datadir/$filedir/$filebase.json - | \
+			    mrconvert -coord 3 $volb0PA -axes 0,1,2 - $datadir/dwi/preproc/topup/b0PA.mif.gz
+			    #OLD mrconvert $datadir/$filedir/$filebase.nii.gz -json_import $datadir/$filedir/$filebase.json $datadir/dwi/preproc/topup/b0PA.mif.gz
 		    fi
 		fi
 	    fi
