@@ -35,17 +35,20 @@ shift; shift
 currdir=$PWD
 
 # Defaults
-datadir=derivatives/dMRI/sub-$sID/ses-$ssID
 sessionfile=derivatives/dMRI/sub-$sID/ses-$ssID/session_QC.tsv
 threads=4
-
+# assign default for datadir and dwi dependent on if we have the default sessionfile
 if [ ! -f $sessionfile ]; then
     dwi=$datadir/dwi/orig/sub-${sID}_ses-${ssID}_acq-dki_dir-AP_run-1_dwi.nii.gz
+    datadir=derivatives/dMRI/sub-$sID/ses-$ssID
+    sessionfile=""
+else # we have a sessionfile and we put datadir to its dirname
+    datadir=`dirname $sessionfile`
+    dwi=""
 fi
 
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -63,14 +66,14 @@ done
 
 # Check if images exist, else put in No_image
 if [ ! -f $dwi ]; then dwi=""; fi
-if [ ! -f $sessionfile ]; then sessionfile=""; fi
+if [ ! -f $sessionfile ]; then sessionfile="No_sessionfile"; fi
 
 echo "dMRI preprocessing
 Subject:       	$sID 
 Session:        $ssID
 Session file:	$sessionfile
 DWI (AP):	$dwi
-Directory:     	$datadir
+DataDirectory:	$datadir
  
 $BASH_SOURCE   	$command
 ----------------------------"
@@ -105,8 +108,8 @@ cd $currdir
 if [ ! -d $datadir/dwi/preproc/topup ]; then mkdir -p $datadir/dwi/preproc/topup; fi
 
 # If we have a session.tsv file, use this
-if [ -f $sessionfile ]; then
-    # Read $sessionfile and use entries to create relevant files
+if [ ! $sessionfile == No_sessionfile ]; then
+    echo "Reading $sessionfile and use entries to create relevant files"
     {
 	read
 	while IFS= read -r line
@@ -157,6 +160,8 @@ else
     echo "No session.tsv file, using input/defaults"
     filedir=`dirname $dwi`
     filebase=`basename $dwi .nii.gz`
+    echo "Transferring $filedir/$filebase"
+    ls $filedir/$filebase.nii.gz
     mrconvert $filedir/$filebase.nii.gz \
 	      -json_import $filedir/$filebase.json \
 	      -fslgrad $filedir/$filebase.bvec $filedir/$filebase.bval  \
@@ -195,7 +200,7 @@ fi
 if [ ! -f dwi.mif.gz ]; then
     
     # 1. extract higher shells and put in a joint file
-    dwiextract -shells 1000,2000 dwiAP.mif.gz tmp_dwiAP_b1000b2600.mif
+    dwiextract -shells 1000,2000 dwiAP.mif.gz tmp_dwiAP_b1000b2000.mif
 	
     # 2. Sort out b0s
     # a) extract the b0 that will be used for TOPUP by
@@ -215,10 +220,10 @@ if [ ! -f dwi.mif.gz ]; then
     
     # Put everything into file dwi.mif.gz, with AP followed by PA volumes
     # FL 2021-12-20 - NOTE TOPUP and EDDY not working properly for dirPA, so only use dirAP to go into dwi.mif.gz
-    mrcat -axis 3 tmp_dwiAP_b0.mif tmp_dwiAP_b1000b2600.mif dwi.mif.gz
+    mrcat -axis 3 tmp_dwiAP_b0.mif tmp_dwiAP_b1000b2000.mif dwi.mif.gz
 
     # clean-up
-    rm tmp_dwi*.mif*
+    rm tmp_dwi*.mif* tmp_b0AP.mif*
     
 fi
 
