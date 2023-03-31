@@ -160,12 +160,13 @@ else
     echo "No session.tsv file, using input/defaults"
     filedir=`dirname $dwi`
     filebase=`basename $dwi .nii.gz`
-    echo "Transferring $filedir/$filebase"
-    ls $filedir/$filebase.nii.gz
-    mrconvert $filedir/$filebase.nii.gz \
-	      -json_import $filedir/$filebase.json \
-	      -fslgrad $filedir/$filebase.bvec $filedir/$filebase.bval  \
-	      $datadir/dwi/preproc/dwiAP.mif.gz
+    if [ ! -f $datadir/dwi/preproc/dwiAP.mif.gz ]; then
+	echo "Transferring $filedir/$filebase.nii.gz into $datadir/dwi/preproc/dwiAP.mif.gz"
+	mrconvert $filedir/$filebase.nii.gz \
+		  -json_import $filedir/$filebase.json \
+		  -fslgrad $filedir/$filebase.bvec $filedir/$filebase.bval  \
+		  $datadir/dwi/preproc/dwiAP.mif.gz
+    fi
 fi
 
 
@@ -198,32 +199,37 @@ fi
 # Create dwi.mif.gz to go into further processing. NOTE: b0APvol will be put first in dwi.mif.gz
 # This code snippet has been adapted from https://github.com/sotnir/NENAH-BIDS/blob/main/dMRI/preprocess.sh
 if [ ! -f dwi.mif.gz ]; then
-    
-    # 1. extract higher shells and put in a joint file
-    dwiextract -shells 1000,2000 dwiAP.mif.gz tmp_dwiAP_b1000b2000.mif
-	
-    # 2. Sort out b0s
-    # a) extract the b0 that will be used for TOPUP by
-    b0topup=$b0APvol;
-    # b) and put in /topup/tmp_b0$dir.mif
-    mrconvert -coord 3 $b0topup -axes 0,1,2 dwiAP.mif.gz topup/tmp_b0AP.mif
-    # c) and extract b0s from dwiAP.mif where the b0 for TOPUP will be placed first (by creating and an indexlist)
-    indexlist=$b0topup;
-    for index in `mrinfo -shell_indices dwiAP.mif.gz | awk '{print $1}' | sed 's/\,/\ /g'`; do
-	if [ ! $index == $b0topup ]; then
-	    indexlist=`echo $indexlist,$index`;
-	fi
-    done
-    echo "Extracting b0-values in order $indexlist from dwiAP.mif.gz, i.e. extracting volume $b0topup for TOPUP first";
-    mrconvert -coord 3 $indexlist dwiAP.mif.gz tmp_dwiAP_b0.mif
-	
-    
-    # Put everything into file dwi.mif.gz, with AP followed by PA volumes
-    # FL 2021-12-20 - NOTE TOPUP and EDDY not working properly for dirPA, so only use dirAP to go into dwi.mif.gz
-    mrcat -axis 3 tmp_dwiAP_b0.mif tmp_dwiAP_b1000b2000.mif dwi.mif.gz
 
-    # clean-up
-    rm tmp_dwi*.mif* tmp_b0AP.mif*
+    # If we can use topup (i.e. we have the file topup/b0APPA.mif.gz) then we need to re-arrange in dwiAP
+    if [ -f topup/b0APPA.mif.gz ]; then
+	# 1. extract higher shells and put in a joint file
+	dwiextract -shells 1000,2000 dwiAP.mif.gz tmp_dwiAP_b1000b2000.mif	
+	# 2. Sort out b0s
+	# a) extract the b0 that will be used for TOPUP by
+	b0topup=$b0APvol;
+	# b) and put in /topup/tmp_b0$dir.mif
+	mrconvert -coord 3 $b0topup -axes 0,1,2 dwiAP.mif.gz topup/tmp_b0AP.mif
+	# c) and extract b0s from dwiAP.mif where the b0 for TOPUP will be placed first (by creating and an indexlist)
+	indexlist=$b0topup;
+	for index in `mrinfo -shell_indices dwiAP.mif.gz | awk '{print $1}' | sed 's/\,/\ /g'`; do
+	    if [ ! $index == $b0topup ]; then
+		indexlist=`echo $indexlist,$index`;
+	fi
+	done
+	echo "Extracting b0-values in order $indexlist from dwiAP.mif.gz, i.e. extracting volume $b0topup for TOPUP first";
+	mrconvert -coord 3 $indexlist dwiAP.mif.gz tmp_dwiAP_b0.mif
+	
+	
+	# Put everything into file dwi.mif.gz, with AP followed by PA volumes
+	# FL 2021-12-20 - NOTE TOPUP and EDDY not working properly for dirPA, so only use dirAP to go into dwi.mif.gz
+	mrcat -axis 3 tmp_dwiAP_b0.mif tmp_dwiAP_b1000b2000.mif dwi.mif.gz
+	
+	# clean-up
+	rm tmp_dwi*.mif* tmp_b0AP.mif*
+	
+    else # We don't have possibility to use TOPUP, so dwiAP.mif.gz as it is becoms dwi.mif.gz
+	mrconvert dwiAP.mif.gz dwi.mif.gz
+    fi	
     
 fi
 
@@ -369,12 +375,5 @@ for bvalue in $bvalues; do
 	echo mrview ${bfile}_brain.mif.gz -mode 2
     fi
 done
-
-# Calculate diffusion tensor and tensor metrics
-
-if [ ! -f dt.mif.gz ]; then
-    dwi2tensor -mask mask.mif.gz ${dwi}_inorm.mif.gz dt.mif.gz
-    tensor2metric -force -fa fa.mif.gz -adc adc.mif.gz -rd rd.mif.gz -ad ad.mif.gz -vector ev.mif.gz dt.mif.gz
-fi
 
 cd $currdir
