@@ -30,13 +30,29 @@ This image is an overview of the process
 ![image](https://user-images.githubusercontent.com/20419258/230001015-97f8d736-0063-474d-afef-81a7a747f74d.png)  
 
 ### Implementation
-This uses the notebook `sourcedata2nifti.ipynb`  
-Input:
-Output:
+This will be done by the jupyter notebook `sourcedata2nifti.ipynb`  
+The first cell in the ipynb-file is where user-input goes
+  ```
+######################################################
+# User input
+
+subject = '010'
+session = 'MR1'
+
+# Define good DCM datafolder as input (and if no data is not good enough, leave blank)
+dki_dirAP = 's16_DKI_2.5mm_NODDI_73dir_0_1000_2000'
+dki_dirAP_volb0 = ''
+
+dki_dirPA = ''
+dki_dirPA_volb0 = ''
+
+t2w_mcrib = ''
+t1w_mprage = 's05_MPRAGE'
+```
 
 ## dMRI pipeline
 
 ### Implementation
-This uses the notebook `sourcedata2nifti.ipynb`  
+This uses the notebook `dmri_preprocess.ipynb`  
 Input:
 Output:
