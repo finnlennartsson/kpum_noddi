@@ -4,8 +4,8 @@
 usage()
 {
   base=$(basename "$0")
-  echo "usage: $base DCMparentfolder DCMdatafolder sID ssID [options]
-Simple script to put the patient's DICOMs in DICOM-folder into /sourcedata folder using dcm2niix.
+  echo "usage: $base DCMbasefolder DCMdatafolder sID ssID [options]
+Simple script to put the patient's DICOMs in DICOM-folder (within the DICOM-basefolder) into /sourcedata folder using dcm2niix.
 sourcedata-folder
  |
  -- subj-sID
@@ -15,14 +15,14 @@ sourcedata-folder
          --DCM-folders for each Series
 
 Two-step processes
-1. Data is copied and with file and folder names rearranged and renamed into "DCMparenfolder"/sourcedata
+1. Data is copied and with file and folder names rearranged and renamed into "DCMbasefolder"/sourcedata
 2. Data anonymized using Python-script "codedir"/python/anonymize_dicoms.py 
 
 Arguments:
-  DCMparentfolder		Parent DICOM-folder (e.g. rawdicomdir)
-  DCMdatafolder			Patient's DICOM-folder within Parent DICOM-folder (e.g. 002_MR1_8193760_20210512/DICOM_fromPACS)
-  sID				Patient's Subject ID (e.g. 001)
-  ssID				Patient's Session ID (e.g. MR1)
+  DCMbasefolder   Parent DICOM-folder (e.g. /mnt/e/Finn/KPUM_NODDI/DICOM_KPUM_NODDI)
+  DCMdatafolder   Patient's DICOM-folder within Parent DICOM-folder (e.g. 002_MR1_8193760_20210512/DICOM_fromPACS)
+  sID             Patient's Subject ID (e.g. 001)
+  ssID            Patient's Session ID (e.g. MR1)
 Options:
   -sourcedata			Output sourcedata folder (default: sourcedata)
   -h / -help / --help           Print usage.
@@ -34,17 +34,15 @@ Options:
 
 [ $# -ge 1 ] || { usage; }
 command=$@
-DCMparentfolder=$1
+DCMbasefolder=$1
 DCMdatafolder=$2
 sID=$3
 ssID=$4
 shift; shift; shift; shift
 
-studydir=$PWD
-
 # Defaults
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-sourcedatafolder=$studydir/sourcedata;
+sourcedatafolder=$DCMbasefolder/sourcedata;
 
 # Read arguments
 while [ $# -gt 0 ]; do
@@ -57,9 +55,9 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-DCMfolder=$DCMparentfolder/$DCMdatafolder
+DCMfolder=$DCMbasefolder/$DCMdatafolder
 
-logdir=${studydir}/derivatives/logs/sub-${sID}/ses-${ssID}
+logdir=${DCMbasefolder}/derivatives/logs/sub-${sID}/ses-${ssID}
 script=`basename $0 .sh`
 
 
@@ -83,8 +81,8 @@ echo
 ##################################################################################
 # 1. Re-arrange DCM into sourcedata-folder in a BIDS-like structure using dcm2niix
 
-#sourcedata_nonanonym=$DCMparentfolder/sourcedata_non-anonym/sub-$sID/ses-$ssID;
-sourcedata_nonanonym=$DCMparentfolder/sourcedata/sub-$sID/ses-$ssID;
+#sourcedata_nonanonym=$DCMbasefolder/sourcedata_non-anonym/sub-$sID/ses-$ssID;
+sourcedata_nonanonym=$DCMbasefolder/sourcedata/sub-$sID/ses-$ssID;
 output=$sourcedata_nonanonym;
 
 if [ ! -d $output ]; then mkdir -p $output; fi

@@ -1,6 +1,6 @@
+import os
 import pydicom as pm
 from glob import glob
-import os
 
 def anonymize_dicom(in_path, out_path, PatientName='Anonymous'):
     # Anonymouses input DCM according to data_elements in list
@@ -9,12 +9,16 @@ def anonymize_dicom(in_path, out_path, PatientName='Anonymous'):
     
     # DCM tags to anonymize
     data_elements = ['PatientName',
-                     'PatientBirthDate',
                      'PatientID']
     for de in data_elements:
         if de in dicom_file:
             dicom_file.data_element(de).value = 'Anonymous'
-            dicom_file.save_as(out_path)
+    time_elements = ['PatientBirthDate']
+    for de in time_elements:
+        if de in dicom_file:
+            dicom_file.data_element(de).value = '19010101'
+        
+    dicom_file.save_as(out_path)
     
 
 if __name__ == '__main__':
