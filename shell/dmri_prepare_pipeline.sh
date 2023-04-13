@@ -15,17 +15,16 @@ $datadir
 	/xfm
 	/logs
 copies the relevant files (often given by images which have passed QC logged in session_QC.tsv file) into subfolder /orig in /dwi, /anat and /fmap
-Also copies the session.tsv (if present rawdata/sub-$sID/ses-$ssID) into $datadir
+Also copies the session.tsv (if present nifti/sub-\$sID/ses-\$ssID) into \$datadir
 
 Arguments:
-  sID                         Subject ID (e.g. 001) 
-  ssID                        Session ID (e.g. MR2)
+  sID							Subject ID (e.g. 001) 
+  ssID							Session ID (e.g. MR2)
 Options:
-  -s / session-file             session.tsv that list files in rawdata/sub-sID/ses-ssID that should be used! Overrides options below (default: rawdata/sub-sID/ses-ssID/session_QC.tsv)
-  -dwi				                  dMRI DKI data (default: rawdata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_acq-dki_dir-AP_run-1_dwi.nii.gz)
-  -dti				                  dMRI DTI data (default: rawdata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_acq-dti_dir-AP_run-1_dwi.nii.gz)  
-  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID)
-  -h / -help / --help           Print usage.
+  -s / session-file				session.tsv that list files in nifti/sub-sID/ses-ssID that should be used! Overrides options below (default: nifti/sub-sID/ses-ssID/session_QC.tsv)
+  -dwi							dMRI DKI data (default: nifti/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-AP_dwi.nii)
+  -d / -data-dir <directory>	The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID)
+  -h / -help / --help			Print usage.
 "
   exit;
 }
@@ -36,18 +35,18 @@ Options:
 command=$@
 sID=$1
 ssID=$2
+shift; shift
 
 currdir=$PWD
 
 # Defaults
-dwi=rawdata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_acq-dki_dir-AP_run-1_dwi.nii.gz
+dwi=nifti/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-AP_dwi.nii
 datadir=derivatives/dMRI/sub-$sID/ses-$ssID
-sessionfile=rawdata/sub-$sID/ses-$ssID/session_QC.tsv
+sessionfile=nifti/sub-$sID/ses-$ssID/session_QC.tsv
 
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-shift; shift
 while [ $# -gt 0 ]; do
     case "$1" in
 	-s|-session-file)  shift; sessionfile=$1; ;;
@@ -63,7 +62,6 @@ done
 # Check if files exist, else put in blank/No_image
 if [ ! -f $sessionfile ]; then sessionfile=""; fi
 if [ ! -f $dwi ]; then dwi=""; fi
-if [ ! -f $dti ]; then dti=""; fi
 
 if [ ! $sessionfile == "" ]; then
     echo "Preparing for dMRI pipeline
@@ -79,8 +77,7 @@ else
     echo "Preparing for dMRI pipeline
     Subject:       	$sID 
     Session:        $ssID
-    DWI (DKI):		  $dwi
-    DWI (DTI):      $dti
+    DWI (DKI):		$dwi
     Directory:     	$datadir 
 
     $BASH_SOURCE   	$command
@@ -116,7 +113,7 @@ cd $currdir
 
 if [ -f $sessionfile ]; then
     # Use files listed in "session.tsv" file, which refer to file on session level in BIDS rawdata directory
-    rawdatadir=rawdata/sub-$sID/ses-$ssID
+    niftidir=nifti/sub-$sID/ses-$ssID
     # Read $sessionfile, copy files and meanwhile create a local session_QC.tsv in $datadir
     echo "Transfer data in $sessionfile which has qc_pass_fail = 1 or 0.5"
     {
@@ -130,24 +127,24 @@ if [ -f $sessionfile ]; then
 	      QCPass=`echo "$line" | awk '{ print $4 }'`
 	      if [[ $QCPass == 1 || $QCPass == 0.5 ]]; then
 		  file=`echo "$line" | awk '{ print $3 }'`
-		  filebase=`basename $file .nii.gz`
+		  filebase=`basename $file .nii`
 		  filedir=`dirname $file`
 		  case $filedir in
 		      anat)
-			  if [ ! -f $datadir/anat/orig/$filebase.nii.gz ]; then 
-			      cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $datadir/anat/orig/.
+			  if [ ! -f $datadir/anat/orig/$filebase.nii ]; then 
+			      cp $niftidir/$filedir/$filebase.nii $niftidir/$filedir/$filebase.json $datadir/anat/orig/.
 			      echo "$line" | sed "s/$filedir\//$filedir\/orig\//g" >> $datadir/session_QC.tsv
 			  fi
 			  ;;
 		      dwi)
-			  if [ ! -f $datadir/dwi/orig/$filebase.nii.gz ]; then 
-		    	      cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $rawdatadir/$filedir/$filebase.bval $rawdatadir/$filedir/$filebase.bvec $datadir/dwi/orig/.
+			  if [ ! -f $datadir/dwi/orig/$filebase.nii ]; then 
+		    	      cp $niftidir/$filedir/$filebase.nii $niftidir/$filedir/$filebase.json $niftidir/$filedir/$filebase.bval $niftidir/$filedir/$filebase.bvec $datadir/dwi/orig/.
 			      echo "$line" | sed "s/$filedir\//$filedir\/orig\//g" >> $datadir/session_QC.tsv
 			  fi
 			  ;;		      
 		      fmap)
-			  if [ ! -f $datadir/anat/fmap/$filebase.nii.gz ]; then 
-			      cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $datadir/fmap/orig/.
+			  if [ ! -f $datadir/anat/fmap/$filebase.nii ]; then 
+			      cp $niftidir/$filedir/$filebase.nii $niftidir/$filedir/$filebase.json $datadir/fmap/orig/.
 			      echo "$line" | sed "s/$filedir\//$filedir\/orig\//g" >> $datadir/session_QC.tsv
 			  fi
 			  ;;
@@ -159,9 +156,9 @@ if [ -f $sessionfile ]; then
         
 else
     # no session_QC.tsv file, so use files from input
-    filelist="$dwi $dti"
+    filelist="$dwi"
     for file in $filelist; do
-	filebase=`basename $file .nii.gz`;
+	filebase=`basename $file .nii`;
 	filedir=`dirname $file`
 	if [ $file == $dwi ]; then
 	    cp $file $filedir/$filebase.json $filedir/$filebase.bval $filedir/$filebase.bvec $datadir/dwi/orig/.

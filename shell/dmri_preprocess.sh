@@ -16,9 +16,10 @@ Arguments:
   ssID                       	Session ID (e.g. MR2)
 Options:
   -s / -session-file		Session file to depict which files should go into preprocessing. Overrides defaults below (default: derivatives/dMRI/sub-\$sID/ses-\$ssID/session_QC.tsv)
-  -dwi				dMRI AP data (default: \$datadir/dwi/orig/sub-sID_ses-ssID_acq-dki_dir-AP_run-1_dwi.nii.gz)
+  -dwi				dMRI AP data (default: \$datadir/dwi/orig/sub-sID_ses-ssID_dir-AP_dwi.nii)
+  -protocol			This defines MRI protocol [OLD/NEW]; OLD = no fmap dir-PA and use vol 0 as b0 value for dir-AP; NEW = fmap dir-PA and 7b0 values for dir-AP) (default: OLD)
   -threads			Number of threads for MRtrix commands (default: 4)
-  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID)
+  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-\$sID/ses-\$ssID)
   -h / -help / --help           Print usage.
 "
   exit;
@@ -37,9 +38,10 @@ currdir=$PWD
 # Defaults
 sessionfile=derivatives/dMRI/sub-$sID/ses-$ssID/session_QC.tsv
 threads=4
+protocol=OLD
 # assign default for datadir and dwi dependent on if we have the default sessionfile
 if [ ! -f $sessionfile ]; then
-    dwi=$datadir/dwi/orig/sub-${sID}_ses-${ssID}_acq-dki_dir-AP_run-1_dwi.nii.gz
+    dwi=$datadir/dwi/orig/sub-${sID}_ses-${ssID}_dir-AP_dwi.nii
     datadir=derivatives/dMRI/sub-$sID/ses-$ssID
     sessionfile=""
 else # we have a sessionfile and we put datadir to its dirname
@@ -55,6 +57,7 @@ while [ $# -gt 0 ]; do
 	-s|session-file) shift; sessionfile=$1; ;;
 	-dwi) shift; dwi=$1; ;;
 	-threads) shift; threads=$1; ;;
+	-protocol) shift; protocol=$1; ;;
 	-d|-data-dir)  shift; datadir=$1; ;;
 	-h|-help|--help) usage; ;;
 	-*) echo "$0: Unrecognized option $1" >&2; usage; ;;
@@ -72,7 +75,9 @@ echo "dMRI preprocessing
 Subject:       	$sID 
 Session:        $ssID
 Session file:	$sessionfile
-DWI (AP):	$dwi
+DWI (AP):		$dwi
+MRI Protocol:	$protocol
+Threads:		$threads
 DataDirectory:	$datadir
  
 $BASH_SOURCE   	$command
@@ -103,7 +108,7 @@ if [ ! -d qc ]; then mkdir -p qc; fi
 cd $currdir
 
 ##################################################################################
-# 1. Create dwi.mif.gz in $datadir/dwi/preproc and put b0AP.mif.gz b0PA.mif.gz in $datadir/dwi/preproc/topup
+# 1. Create dwi.mif in $datadir/dwi/preproc and put b0AP.mif b0PA.mif in $datadir/dwi/preproc/topup
 
 if [ ! -d $datadir/dwi/preproc/topup ]; then mkdir -p $datadir/dwi/preproc/topup; fi
 
@@ -121,35 +126,53 @@ if [ ! $sessionfile == No_sessionfile ]; then
 		
 		# Get file from column nbr 3
 		file=`echo "$line" | awk '{ print $3 }'`
-		filebase=`basename $file .nii.gz`
+		filebase=`basename $file .nii`
 		filedir=`dirname $file`
 
 		#### Read flags in session.tsv file with corresponding column index
 		## DKI AP data (dMRI_DKI = 6th column)
 		dwiAP=`echo "$line" | awk '{ print $6 }'`
 		if [ $dwiAP == 1 ]; then		    
-		    if [ ! -f $datadir/dwi/preproc/dwiAP.mif.gz ]; then 
-			mrconvert -json_import $datadir/$filedir/$filebase.json \
-				  -fslgrad $datadir/$filedir/$filebase.bvec $datadir/$filedir/$filebase.bval \
-				  $datadir/$filedir/$filebase.nii.gz $datadir/dwi/preproc/dwiAP.mif.gz
+		    if [ ! -f $datadir/dwi/preproc/dwiAP.mif ]; then 
+
+				# We have NEW protocol and can use all our b0s
+				case $protocol in
+					NEW)
+				 		echo "We have NEW protocol"
+						mrconvert -json_import $datadir/$filedir/$filebase.json \
+							-fslgrad $datadir/$filedir/$filebase.bvec $datadir/$filedir/$filebase.bval \
+							$datadir/$filedir/$filebase.nii $datadir/dwi/preproc/dwiAP.mif
+						;;
+					OLD)
+				 		echo "We have OLD protocol"
+						mrconvert -json_import $datadir/$filedir/$filebase.json \
+							-fslgrad $datadir/$filedir/$filebase.bvec $datadir/$filedir/$filebase.bval \
+							$datadir/$filedir/$filebase.nii $datadir/dwi/preproc/tmp_dwiAP.mif
+						dwiextract -shells 1000,2000 $datadir/dwi/preproc/tmp_dwiAP.mif $datadir/dwi/preproc/tmp_dwiAP_b1000b2000.mif
+						dwiextract -shells 0 $datadir/dwi/preproc/tmp_dwiAP.mif - | mrconvert -coord 3 0 -axes 0,1,2 - $datadir/dwi/preproc/tmp_dwiAP_b0.mif
+						mrcat -axis 3 $datadir/dwi/preproc/tmp_dwiAP_b0.mif $datadir/dwi/preproc/tmp_dwiAP_b1000b2000.mif $datadir/dwi/preproc/dwiAP.mif
+						rm $datadir/dwi/preproc/tmp_*
+						;;
+				esac
+
 		    fi
 		fi		
 		## b0AP and b0PA data
 		volb0AP=`echo "$line" | awk '{ print $8 }'` #(dMRI_vol_for_b0AP = 8th column)
 		if [ ! $volb0AP == "-" ]; then
 		    b0APvol=$volb0AP #Remember this to later!!
-		    if [ ! -f $datadir/dwi/preproc/topup/b0AP.mif.gz ]; then
-			mrconvert $datadir/$filedir/$filebase.nii.gz -json_import $datadir/$filedir/$filebase.json - | \
-			    mrconvert -coord 3 $volb0AP -axes 0,1,2 - $datadir/dwi/preproc/topup/b0AP.mif.gz
+		    if [ ! -f $datadir/dwi/preproc/topup/b0AP.mif ]; then
+			mrconvert $datadir/$filedir/$filebase.nii -json_import $datadir/$filedir/$filebase.json - | \
+			    mrconvert -coord 3 $volb0AP -axes 0,1,2 - $datadir/dwi/preproc/topup/b0AP.mif
 		    fi
 		fi
 		volb0PA=`echo "$line" | awk '{ print $9 }'` #(dMRI_vol_for_b0PA = 9th column)
 		if [ ! $volb0PA == "-" ]; then
-		    if [ ! -f $datadir/dwi/preproc/topup/b0PA.mif.gz ]; then
+		    if [ ! -f $datadir/dwi/preproc/topup/b0PA.mif ]; then
 			#Finn 2023-03-31: change to extract one volb0PA, which was not done in OLD
-			mrconvert $datadir/$filedir/$filebase.nii.gz -json_import $datadir/$filedir/$filebase.json - | \
-			    mrconvert -coord 3 $volb0PA -axes 0,1,2 - $datadir/dwi/preproc/topup/b0PA.mif.gz
-			    #OLD mrconvert $datadir/$filedir/$filebase.nii.gz -json_import $datadir/$filedir/$filebase.json $datadir/dwi/preproc/topup/b0PA.mif.gz
+			mrconvert $datadir/$filedir/$filebase.nii -json_import $datadir/$filedir/$filebase.json - | \
+			    mrconvert -coord 3 $volb0PA -axes 0,1,2 - $datadir/dwi/preproc/topup/b0PA.mif
+			    #OLD mrconvert $datadir/$filedir/$filebase.nii -json_import $datadir/$filedir/$filebase.json $datadir/dwi/preproc/topup/b0PA.mif
 		    fi
 		fi
 	    fi
@@ -159,35 +182,35 @@ if [ ! $sessionfile == No_sessionfile ]; then
 else
     echo "No session.tsv file, using input/defaults"
     filedir=`dirname $dwi`
-    filebase=`basename $dwi .nii.gz`
-    if [ ! -f $datadir/dwi/preproc/dwiAP.mif.gz ]; then
-	echo "Transferring $filedir/$filebase.nii.gz into $datadir/dwi/preproc/dwiAP.mif.gz"
-	mrconvert $filedir/$filebase.nii.gz \
+    filebase=`basename $dwi .nii`
+    if [ ! -f $datadir/dwi/preproc/dwiAP.mif ]; then
+	echo "Transferring $filedir/$filebase.nii into $datadir/dwi/preproc/dwiAP.mif"
+	mrconvert $filedir/$filebase.nii \
 		  -json_import $filedir/$filebase.json \
 		  -fslgrad $filedir/$filebase.bvec $filedir/$filebase.bval  \
-		  $datadir/dwi/preproc/dwiAP.mif.gz
+		  $datadir/dwi/preproc/dwiAP.mif
     fi
 fi
 
 
 ##################################################################################
-# 1b. Create dwi.mif.gz $datadir/dwi/preproc and b0APPA.mif.gz in $datadir/dwi/preproc/topup
+# 1b. Create dwi.mif $datadir/dwi/preproc and b0APPA.mif in $datadir/dwi/preproc/topup
 
 cd $datadir/dwi/preproc
 
 if [ ! -d topup ]; then mkdir topup; fi
 
-# Create b0APPA.mif.gz to go into TOPUP
-if [ ! -f topup/b0APPA.mif.gz ]; then
-    if [ -f topup/b0AP.mif.gz ] && [ -f topup/b0PA.mif.gz ]; then
-	echo "Creating b0APPA.mif.gz from b0AP.mif.gz and b0PA.mif.gz"
-	mrcat topup/b0AP.mif.gz topup/b0PA.mif.gz topup/b0APPA.mif.gz
+# Create b0APPA.mif to go into TOPUP
+if [ ! -f topup/b0APPA.mif ]; then
+    if [ -f topup/b0AP.mif ] && [ -f topup/b0PA.mif ]; then
+	echo "Creating b0APPA.mif from b0AP.mif and b0PA.mif"
+	mrcat topup/b0AP.mif topup/b0PA.mif topup/b0APPA.mif
     else
-	if [ -f topup/b0AP.mif.gz ] && [ ! -f topup/b0PA.mif.gz ]; then
-	    echo "We only have b0AP.mif.gz in /topup => do not have a fieldmap, so eddy will be run without a TOPUP fieldmap"
+	if [ -f topup/b0AP.mif ] && [ ! -f topup/b0PA.mif ]; then
+	    echo "We only have b0AP.mif in /topup => do not have a fieldmap, so eddy will be run without a TOPUP fieldmap"
 	else	
-	    echo "No b0APPA.mif.gz or pair of b0AP.mif.gz and b0PA.mif.gz are present to use with TOPUP
-	          1. Do this by putting one good b0 from dir-AP_dwi and dir-PA_dwi into a file b0APPA.mif.gz into $datadir/dwi/preproc/topup
+	    echo "No b0APPA.mif or pair of b0AP.mif and b0PA.mif are present to use with TOPUP
+	          1. Do this by putting one good b0 from dir-AP_dwi and dir-PA_dwi into a file b0APPA.mif into $datadir/dwi/preproc/topup
 		  2. The same b0 from dir-AP_dwi should be put 1st in the dir-AP_dwi dataset, as dwifslpreprocess will use the 1st b0 in dir-AP and replace the first b0 in b0APPA with
 		  3. Run this script again.     
     	 	  "
@@ -196,39 +219,39 @@ if [ ! -f topup/b0APPA.mif.gz ]; then
     fi
 fi
 
-# Create dwi.mif.gz to go into further processing. NOTE: b0APvol will be put first in dwi.mif.gz
+# Create dwi.mif to go into further processing. NOTE: b0APvol will be put first in dwi.mif
 # This code snippet has been adapted from https://github.com/sotnir/NENAH-BIDS/blob/main/dMRI/preprocess.sh
-if [ ! -f dwi.mif.gz ]; then
+if [ ! -f dwi.mif ]; then
 
-    # If we can use topup (i.e. we have the file topup/b0APPA.mif.gz) then we need to re-arrange in dwiAP
-    if [ -f topup/b0APPA.mif.gz ]; then
+    # If we can use topup (i.e. we have the file topup/b0APPA.mif) then we need to re-arrange in dwiAP
+    if [ -f topup/b0APPA.mif ]; then
 	# 1. extract higher shells and put in a joint file
-	dwiextract -shells 1000,2000 dwiAP.mif.gz tmp_dwiAP_b1000b2000.mif	
+	dwiextract -shells 1000,2000 dwiAP.mif tmp_dwiAP_b1000b2000.mif	
 	# 2. Sort out b0s
 	# a) extract the b0 that will be used for TOPUP by
 	b0topup=$b0APvol;
 	# b) and put in /topup/tmp_b0$dir.mif
-	mrconvert -coord 3 $b0topup -axes 0,1,2 dwiAP.mif.gz topup/tmp_b0AP.mif
+	mrconvert -coord 3 $b0topup -axes 0,1,2 dwiAP.mif topup/tmp_b0AP.mif
 	# c) and extract b0s from dwiAP.mif where the b0 for TOPUP will be placed first (by creating and an indexlist)
 	indexlist=$b0topup;
-	for index in `mrinfo -shell_indices dwiAP.mif.gz | awk '{print $1}' | sed 's/\,/\ /g'`; do
+	for index in `mrinfo -shell_indices dwiAP.mif | awk '{print $1}' | sed 's/\,/\ /g'`; do
 	    if [ ! $index == $b0topup ]; then
 		indexlist=`echo $indexlist,$index`;
 	fi
 	done
-	echo "Extracting b0-values in order $indexlist from dwiAP.mif.gz, i.e. extracting volume $b0topup for TOPUP first";
-	mrconvert -coord 3 $indexlist dwiAP.mif.gz tmp_dwiAP_b0.mif
+	echo "Extracting b0-values in order $indexlist from dwiAP.mif, i.e. extracting volume $b0topup for TOPUP first";
+	mrconvert -coord 3 $indexlist dwiAP.mif tmp_dwiAP_b0.mif
 	
 	
-	# Put everything into file dwi.mif.gz, with AP followed by PA volumes
-	# FL 2021-12-20 - NOTE TOPUP and EDDY not working properly for dirPA, so only use dirAP to go into dwi.mif.gz
-	mrcat -axis 3 tmp_dwiAP_b0.mif tmp_dwiAP_b1000b2000.mif dwi.mif.gz
+	# Put everything into file dwi.mif, with AP followed by PA volumes
+	# FL 2021-12-20 - NOTE TOPUP and EDDY not working properly for dirPA, so only use dirAP to go into dwi.mif
+	mrcat -axis 3 tmp_dwiAP_b0.mif tmp_dwiAP_b1000b2000.mif dwi.mif
 	
 	# clean-up
 	rm tmp_dwi*.mif* tmp_b0AP.mif*
 	
-    else # We don't have possibility to use TOPUP, so dwiAP.mif.gz as it is becoms dwi.mif.gz
-	mrconvert dwiAP.mif.gz dwi.mif.gz
+    else # We don't have possibility to use TOPUP, so dwiAP.mif as it is becoms dwi.mif
+	mrconvert dwiAP.mif dwi.mif
     fi	
     
 fi
@@ -245,24 +268,24 @@ cd $datadir/dwi/preproc
 if [ ! -d denoise ]; then mkdir denoise; fi
 
 # Perform PCA-denosing
-if [ ! -f dwi_den.mif.gz ]; then
+if [ ! -f dwi_den.mif ]; then
     echo Doing MP PCA-denosing with dwidenoise
     # PCA-denoising
-    dwidenoise dwi.mif.gz dwi_den.mif.gz -noise denoise/dwi_noise.mif.gz -nthreads $threads;
+    dwidenoise dwi.mif dwi_den.mif -noise denoise/dwi_noise.mif -nthreads $threads;
     # and calculate residuals
-    mrcalc dwi.mif.gz dwi_den.mif.gz -subtract denoise/dwi_den_residuals.mif.gz
+    mrcalc dwi.mif dwi_den.mif -subtract denoise/dwi_den_residuals.mif
     echo Check the residuals! Should not contain anatomical structure
 fi
 
 # Directory for QC files
 if [ ! -d unring ]; then mkdir unring; fi
 
-if [ ! -f dwi_den_unr.mif.gz ]; then
+if [ ! -f dwi_den_unr.mif ]; then
     echo Remove Gibbs Ringing Artifacts with mrdegibbs
     # Gibbs 
-    mrdegibbs -axes 0,1 dwi_den.mif.gz dwi_den_unr.mif.gz -nthreads $threads
+    mrdegibbs -axes 0,1 dwi_den.mif dwi_den_unr.mif -nthreads $threads
     #calculate residuals
-    mrcalc dwi_den.mif.gz  dwi_den_unr.mif.gz -subtract unring/dwi_den_unr_residuals.mif.gz
+    mrcalc dwi_den.mif  dwi_den_unr.mif -subtract unring/dwi_den_unr_residuals.mif
     echo Check the residuals! Should not contain anatomical structure
 fi
 
@@ -270,35 +293,35 @@ cd $currdir
 
 ##################################################################################
 # 3. TOPUP and EDDY for Motion- and susceptibility distortion correction
-# Do Topup and Eddy with dwifslpreproc and use topup/b0APPA.mif.gz as SE-pair for TOPUP
+# Do Topup and Eddy with dwifslpreproc and use topup/b0APPA.mif as SE-pair for TOPUP
 #
 cd $datadir/dwi/preproc
 
 scratchdir=dwifslpreproc
 
-if [ ! -f dwi_den_unr_eddy.mif.gz ];then
+if [ ! -f dwi_den_unr_eddy.mif ];then
     
-    if [ -f topup/b0APPA.mif.gz ]; then # We have b0APPA and can use TOPUP+EDDY
-	dwifslpreproc -se_epi topup/b0APPA.mif.gz -rpe_header -align_seepi \
+    if [ -f topup/b0APPA.mif ]; then # We have b0APPA and can use TOPUP+EDDY
+	dwifslpreproc -se_epi topup/b0APPA.mif -rpe_header -align_seepi \
 		      -nocleanup \
 		      -scratch $scratchdir \
 		      -topup_options " --iout=field_mag_unwarped" \
 		      -eddy_options " --slm=linear --repol --mporder=8 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 --estimate_move_by_susceptibility --mbs_niter=20 --mbs_ksp=10 --mbs_lambda=10 " \
 		      -eddyqc_all eddy \
 		      -nthreads $threads \
-		      dwi_den_unr.mif.gz \
-		      dwi_den_unr_eddy.mif.gz;
+		      dwi_den_unr.mif \
+		      dwi_den_unr_eddy.mif;
     else # We don't have b0APPA and cannot run TOPUP, and instead EDDY only with motion- and EC-correction
-	TRT=`mrinfo -property TotalReadoutTime dwi_den_unr.mif.gz`
-	PEdir=`mrinfo -property PhaseEncodingDirection dwi_den_unr.mif.gz`
+	TRT=`mrinfo -property TotalReadoutTime dwi_den_unr.mif`
+	PEdir=`mrinfo -property PhaseEncodingDirection dwi_den_unr.mif`
 	dwifslpreproc -rpe_none -pe_dir $PEdir -readout_time $TRT \
 		      -nocleanup \
 		      -scratch $scratchdir \
 		      -eddy_options " --slm=linear --repol --mporder=8 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 --mbs_niter=20 --mbs_ksp=10 --mbs_lambda=10 " \
 		      -eddyqc_all eddy \
 		      -nthreads $threads \
-		      dwi_den_unr.mif.gz \
-		      dwi_den_unr_eddy.mif.gz;
+		      dwi_den_unr.mif \
+		      dwi_den_unr_eddy.mif;
     fi
     # Now cleanup by transferring relevant files to topup folder and deleting scratch folder
     mv eddy/quad ../../qc/.
@@ -310,34 +333,34 @@ fi
 cd $currdir
 
 ##################################################################################
-# 3. Mask generation, N4 biasfield correction, meanb0 generation and tensor estimation
+# 3. Mask generation, N4 biasfield correction and meanb0/1000/2000 generation
 cd $datadir/dwi/preproc
 
-echo "Pre-processing with mask generation, N4 biasfield correction, Normalisation, meanb0,400,1000,2600 generation and tensor estimation"
+echo "Pre-processing with mask generation, N4 biasfield correction, Normalisation and meanb0,1000,2000 generation"
 
 # point to right filebase
 dwi=dwi_den_unr_eddy
 
 # Create mask and dilate (to ensure usage with ACT)
-if [ ! -f mask.mif.gz ]; then
-    dwiextract -bzero $dwi.mif.gz - | mrmath -force -axis 3 - mean meanb0tmp.nii.gz
+if [ ! -f mask.mif ]; then
+    dwiextract -bzero $dwi.mif - | mrmath -force -axis 3 - mean meanb0tmp.nii
     bet meanb0tmp meanb0tmp_brain -m -f 0.25 -R #-f 0.25 from dHCP dMRI pipeline
     # Check result
-    # echo mrview meanb0tmp.nii.gz -roi.load meanb0tmp_brain_mask.nii.gz -roi.opacity 0.5 -mode 2
-    mrconvert meanb0tmp_brain_mask.nii.gz mask.mif.gz
+    # echo mrview meanb0tmp.nii -roi.load meanb0tmp_brain_mask.nii -roi.opacity 0.5 -mode 2
+    mrconvert meanb0tmp_brain_mask.nii mask.mif
     rm meanb0tmp*
 fi
 
 # Do B1-correction. Use ANTs N4
-if [ ! -f  ${dwi}_N4.mif.gz ]; then
+if [ ! -f  ${dwi}_N4.mif ]; then
     if [ ! -d N4 ]; then mkdir N4;fi
     # Add number of threads used
-    dwibiascorrect ants -mask mask.mif.gz -bias N4/bias.mif.gz -nthreads $threads $dwi.mif.gz ${dwi}_N4.mif.gz
+    dwibiascorrect ants -mask mask.mif -bias N4/bias.mif -nthreads $threads $dwi.mif ${dwi}_N4.mif
 fi
 
 
 # last file in the processing
-dwipreproclast=${dwi}_N4.mif.gz
+dwipreproclast=${dwi}_N4.mif
 
 cd $currdir
 
@@ -347,32 +370,32 @@ cd $currdir
 
 cd $datadir/dwi
 
-# Create symbolic link to last file in /preproc and copy mask.mif.gz to $datadir/dwi
-mrconvert preproc/$dwipreproclast dwi_preproc.mif.gz
-mrconvert preproc/mask.mif.gz mask.mif.gz
+# Create symbolic link to last file in /preproc and copy mask.mif to $datadir/dwi
+mrconvert preproc/$dwipreproclast dwi_preproc.mif
+mrconvert preproc/mask.mif mask.mif
 dwi=dwi_preproc
 
 # B0-normalisation
-if [ ! -f ${dwi}_inorm.mif.gz ]; then
-    dwinormalise individual $dwi.mif.gz mask.mif.gz ${dwi}_inorm.mif.gz
+if [ ! -f ${dwi}_inorm.mif ]; then
+    dwinormalise individual $dwi.mif mask.mif ${dwi}_inorm.mif
 fi
 
 # Extract mean b0, b1000 and b2000
-bvalues=`mrinfo -shell_bvalues ${dwi}_inorm.mif.gz`
+bvalues=`mrinfo -shell_bvalues ${dwi}_inorm.mif`
 for bvalue in $bvalues; do
     bfile=meanb$bvalue
     if [ $bvalue == 0 ]; then
-	if [ ! -f $bfile.mif.gz ]; then
-	    dwiextract -shells $bvalue ${dwi}_inorm.mif.gz - |  mrmath -force -axis 3 - mean $bfile.mif.gz
+	if [ ! -f $bfile.mif ]; then
+	    dwiextract -shells $bvalue ${dwi}_inorm.mif - |  mrmath -force -axis 3 - mean $bfile.mif
 	fi
     fi
     
-    if [ ! -f ${bfile}_brain.mif.gz ]; then
-	dwiextract -shells $bvalue ${dwi}_inorm.mif.gz - |  mrmath -force -axis 3 - mean - | mrcalc - mask.mif.gz -mul ${bfile}_brain.mif.gz
-	#mrconvert $bfile.mif.gz $bfile.nii.gz
-	#mrconvert ${bfile}_brain.mif.gz ${bfile}_brain.nii.gz
-	echo "Visually check the ${bfile}_brain.mif.gz"
-	echo mrview ${bfile}_brain.mif.gz -mode 2
+    if [ ! -f ${bfile}_brain.mif ]; then
+	dwiextract -shells $bvalue ${dwi}_inorm.mif - |  mrmath -force -axis 3 - mean - | mrcalc - mask.mif -mul ${bfile}_brain.mif
+	mrconvert $bfile.mif $bfile.nii
+	mrconvert ${bfile}_brain.mif ${bfile}_brain.nii
+	echo "Visually check the ${bfile}_brain.mif"
+	echo mrview ${bfile}_brain.mif -mode 2
     fi
 done
 
