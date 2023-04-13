@@ -75,11 +75,11 @@ echo "dMRI preprocessing
 Subject:       	$sID 
 Session:        $ssID
 Session file:	$sessionfile
-DWI (AP):		$dwi
+DWI (AP):	$dwi
 MRI Protocol:	$protocol
-Threads:		$threads
+Threads:	$threads
 DataDirectory:	$datadir
- 
+
 $BASH_SOURCE   	$command
 ----------------------------"
 
@@ -333,10 +333,11 @@ fi
 cd $currdir
 
 ##################################################################################
-# 3. Mask generation, N4 biasfield correction and meanb0/1000/2000 generation
+# 3a. Mask generation, (N4 biasfield correction), b0-normalisation and meanb0/1000/2000 generation
+
 cd $datadir/dwi/preproc
 
-echo "Pre-processing with mask generation, N4 biasfield correction, Normalisation and meanb0,1000,2000 generation"
+echo "Pre-processing with mask generation and (NOTENOTE - currently omitted) N4 biasfield correction"
 
 # point to right filebase
 dwi=dwi_den_unr_eddy
@@ -344,31 +345,40 @@ dwi=dwi_den_unr_eddy
 # Create mask and dilate (to ensure usage with ACT)
 if [ ! -f mask.mif ]; then
     dwiextract -bzero $dwi.mif - | mrmath -force -axis 3 - mean meanb0tmp.nii
-    bet meanb0tmp meanb0tmp_brain -m -f 0.25 -R #-f 0.25 from dHCP dMRI pipeline
+    bet meanb0tmp.nii meanb0tmp_brain.nii -m -f 0.25 -R #-f 0.25 from dHCP dMRI pipeline
     # Check result
     # echo mrview meanb0tmp.nii -roi.load meanb0tmp_brain_mask.nii -roi.opacity 0.5 -mode 2
     mrconvert meanb0tmp_brain_mask.nii mask.mif
-    rm meanb0tmp*
+    #rm meanb0tmp*
 fi
 
-# Do B1-correction. Use ANTs N4
-if [ ! -f  ${dwi}_N4.mif ]; then
-    if [ ! -d N4 ]; then mkdir N4;fi
-    # Add number of threads used
-    dwibiascorrect ants -mask mask.mif -bias N4/bias.mif -nthreads $threads $dwi.mif ${dwi}_N4.mif
-fi
+## Do B1-correction. Use ANTs N4
+## Finn 2023-04-13: Not working!! Cannot figure out why. This is the internal error message
+#dwibiascorrect: [ERROR] N4BiasFieldCorrection -d 3 -i mean_bzero.nii -w mask.nii -o [corrected.nii,init_bias.nii] -s 4 -b [100,3] -c [1000,0.0] (ants.py:75)
+#dwibiascorrect: [ERROR] Information from failed command:
+#dwibiascorrect:
+#                ERROR:  Invalid flag provided nt
+#                ERROR:  Invalid command line flags found! Aborting execution.
+#
+## Uncomment below if to use again
+#if [ ! -f  ${dwi}_N4.mif ]; then
+#    if [ ! -d N4 ]; then mkdir N4;fi
+#    # Add number of threads used
+#    dwibiascorrect ants -mask mask.mif -bias N4/bias.mif -nthreads $threads $dwi.mif ${dwi}_N4.mif
+#fi
+## update $dwi
+#dwi=dwi_den_unr_eddy_N4
 
-
-# last file in the processing
-dwipreproclast=${dwi}_N4.mif
+dwipreproclast=${dwi}.mif
 
 cd $currdir
 
-
 ##################################################################################
-## 3. B0-normalise, create meanb0 and do tensor estimation
+# 3b. b0-normalisation and meanb0/1000/2000 generation
 
 cd $datadir/dwi
+
+echo "b0-normalisation and meanb0,1000,2000 generation"
 
 # Create symbolic link to last file in /preproc and copy mask.mif to $datadir/dwi
 mrconvert preproc/$dwipreproclast dwi_preproc.mif
@@ -400,3 +410,5 @@ for bvalue in $bvalues; do
 done
 
 cd $currdir
+
+##################################################################################
