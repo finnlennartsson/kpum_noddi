@@ -43,8 +43,8 @@ dMRI_rawdata_visualisation ()
 	echo b-values $shell_bvalues with dMRI-volumes $shell_nbs
 	for shell in $shell_bvalues; do
 	    echo Inspecting shell with b-value=$shell
-	    if [ $shell == 0 ]; then echo b0 have this volume indices; mrinfo -shell_indices tmp.mif; fi
-	    dwiextract -quiet -shell $shell tmp.mif - | mrview - -mode 2 
+	    if [ $shell == 0 ]; then echo b0 have this volume indices; mrinfo -shell_indices tmp.mif | awk '{print $1}'; fi
+	    dwiextract -quiet -shell $shell tmp.mif - | mrview - -mode 2 -colourmap 1
 	done
 	rm tmp.mif
     fi
@@ -108,7 +108,7 @@ echo "QC eye-balling of BIDS rawdata given by session_QC.tsv file"
 	if [ $filedir == "dwi" ]; then
 	    dMRI_rawdata_visualisation $file;
 	else
-	    mrview $file -mode 2 
+	    mrview $file -mode 2 -colourmap 1
 	fi
         let counter++
     done
