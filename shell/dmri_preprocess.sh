@@ -361,13 +361,13 @@ fi
 #                ERROR:  Invalid command line flags found! Aborting execution.
 #
 ## Uncomment below if to use again
-#if [ ! -f  ${dwi}_N4.mif ]; then
-#    if [ ! -d N4 ]; then mkdir N4;fi
-#    # Add number of threads used
-#    dwibiascorrect ants -mask mask.mif -bias N4/bias.mif -nthreads $threads $dwi.mif ${dwi}_N4.mif
-#fi
-## update $dwi
-#dwi=dwi_den_unr_eddy_N4
+if [ ! -f  ${dwi}_N4.mif ]; then
+    if [ ! -d N4 ]; then mkdir N4;fi
+    # Add number of threads used
+    dwibiascorrect ants -mask mask.mif -bias N4/bias.mif -nthreads $threads $dwi.mif ${dwi}_N4.mif
+fi
+# update $dwi
+dwi=dwi_den_unr_eddy_N4
 
 dwipreproclast=${dwi}.mif
 

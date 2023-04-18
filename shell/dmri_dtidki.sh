@@ -13,8 +13,8 @@ Arguments:
   sID				Subject ID (e.g. 001) 
   ssID                       	Session ID (e.g. MR2)
 Options:
-  -dwi				dMRI preprocessed data in MRtrix .mif.gz format (default: \$datadir/dwi/dwi_preproc_inorm.mif.gz
-  -mask				Brain mask in .mif.gz format (default: \$datadir/dwi/mask.mif.gz)
+  -dwi				dMRI preprocessed data in MRtrix .mif format (default: \$datadir/dwi/dwi_preproc_inorm.mif
+  -mask				Brain mask in .mif format (default: \$datadir/dwi/mask.mif)
   -threads			Number of threads for MRtrix commands (default: 4)
   -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID)
   -h / -help / --help           Print usage.
@@ -34,8 +34,8 @@ currdir=$PWD
 
 # Defaults
 datadir=derivatives/dMRI/sub-$sID/ses-$ssID
-dwi=$datadir/dwi/dwi_preproc_inorm.mif.gz
-mask=$datadir/dwi/mask.mif.gz
+dwi=$datadir/dwi/dwi_preproc_inorm.mif
+mask=$datadir/dwi/mask.mif
 threads=4
 
 # check whether the different tools are set and load parameters
@@ -62,9 +62,10 @@ if [ ! -f $mask ]; then dwi=""; fi
 echo "DTI and DKI estimation
 Subject:       	$sID 
 Session:        $ssID
-DWI (AP):	$dwi
-Mask:		$mask
-Directory:     	$datadir
+DWI (AP):       $dwi
+Mask:           $mask
+Directory:      $datadir
+Threads:        $threads
  
 $BASH_SOURCE   	$command
 ----------------------------"
@@ -88,11 +89,11 @@ echo
 if [ ! -d $datadir/dwi ]; then mkdir -p $datadir/dwi; fi
 
 ##################################################################################
-# 1. Create $dwibase.mif.gz in $datadir/dwi if does not exist
+# 1. Create $dwibase.mif in $datadir/dwi if does not exist
 
-dwibase=`basename $dwi .mif.gz`
-if [ ! -f $datadir/dwi/$dwibase.mif.gz ]; then mrconvert $dwi $datadir/dwi/$dwibase.mif.gz; fi
-if [ ! -f $datadir/dwi/$mask.nii ]; then mrconvert $mask $datadir/dwi/mask.nii; fi
+dwibase=`basename $dwi .mif`
+if [ ! -f $datadir/dwi/$dwibase.mif ]; then mrconvert $dwi $datadir/dwi/$dwibase.mif; fi
+if [ ! -f $datadir/dwi/$mask.mif ]; then mrconvert $mask $datadir/dwi/mask.mif; fi
 
 # update dwi to point at filebase
 dwi=$dwibase
@@ -106,7 +107,7 @@ cd dtidki
 
 if [ ! -f ${dwi}_tensor.nii ]; then
     # Only use shells b0 and b1000 for DTI estimation 
-    dwiextract -shells 0,1000 ../${dwi}.mif.gz - | dwi2tensor -mask ../mask.mif.gz - ${dwi}_DT.nii; 
+    dwiextract -shells 0,1000 ../${dwi}.mif - | dwi2tensor -mask ../mask.mif - ${dwi}_DT.nii; 
     tensor2metric -force -fa ${dwi}_FA.nii -adc ${dwi}_MD.nii -rd ${dwi}_RD.nii -ad ${dwi}_AD.nii -vector ${dwi}_RGB.nii ${dwi}_DT.nii
     # Calculate Trace=lambda1+lambda2+lambda3 as 3*MD
     mrcalc ${dwi}_MD.nii 3 -mult ${dwi}_Trace.nii
