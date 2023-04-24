@@ -34,8 +34,7 @@ currdir=$PWD
 
 # Defaults
 datadir=derivatives/dMRI/sub-$sID/ses-$ssID
-dwi=$datadir/dwi/dwi_preproc_inorm.mif
-mask=$datadir/dwi/mask.mif
+dwi=""; mask=""  # See below - Defaults cont'd
 threads=4
 
 # check whether the different tools are set and load parameters
@@ -54,10 +53,17 @@ while [ $# -gt 0 ]; do
     shift
 done
 
+# Defaults cont'd
+if [ $dwi=="" ]; then
+  dwi=$datadir/dwi/dwi_preproc_inorm.mif
+fi
+if [ $mask=="" ]; then
+  mask=$datadir/dwi/mask.mif
+fi
 
 # Check if images exist, else put in No_image
-if [ ! -f $dwi ]; then dwi=""; fi
-if [ ! -f $mask ]; then dwi=""; fi
+if [ ! -f $dwi ]; then dwi="No_image"; fi
+if [ ! -f $mask ]; then dwi="No_image"; fi
 
 echo "DTI and DKI estimation
 Subject:       	$sID 
@@ -93,7 +99,7 @@ if [ ! -d $datadir/dwi ]; then mkdir -p $datadir/dwi; fi
 
 dwibase=`basename $dwi .mif`
 if [ ! -f $datadir/dwi/$dwibase.mif ]; then mrconvert $dwi $datadir/dwi/$dwibase.mif; fi
-if [ ! -f $datadir/dwi/$mask.mif ]; then mrconvert $mask $datadir/dwi/mask.mif; fi
+if [ ! -f $datadir/dwi/mask.mif ]; then mrconvert $mask $datadir/dwi/mask.mif; fi
 
 # update dwi to point at filebase
 dwi=$dwibase
@@ -102,11 +108,12 @@ dwi=$dwibase
 ## 2. Tensor estimation and tensor parameter calculation
 
 cd $datadir/dwi
-if [ ! -d dtidki ]; then mkdir -p dtidki; fi
-cd dtidki
+if [ ! -d dti ]; then mkdir -p dti; fi
+cd dti
 
-if [ ! -f ${dwi}_tensor.nii ]; then
+if [ ! -f ${dwi}_DT.nii ]; then
     # Only use shells b0 and b1000 for DTI estimation 
+    echo "Estimating DTI parameters using only b0 and b1000 shells"
     dwiextract -shells 0,1000 ../${dwi}.mif - | dwi2tensor -mask ../mask.mif - ${dwi}_DT.nii; 
     tensor2metric -force -fa ${dwi}_FA.nii -adc ${dwi}_MD.nii -rd ${dwi}_RD.nii -ad ${dwi}_AD.nii -vector ${dwi}_RGB.nii ${dwi}_DT.nii
     # Calculate Trace=lambda1+lambda2+lambda3 as 3*MD
@@ -117,6 +124,40 @@ cd $currdir
 
 ##################################################################################
 ## 3. Kurtosis estimation and kurtosis parameter calculation
+
+cd $datadir/dwi
+if [ ! -d dki ]; then mkdir -p dki; fi
+
+cd dki
+
+# Put files in /dki
+if [ ! -f $dwi.nii ]; then
+  mrconvert  -json_export $dwi.json -export_grad_fsl $dwi.bvec $dwi.bval ../$dwi.mif $dwi.nii
+fi
+if [ ! -f mask.nii ]; then
+  mrconvert  -json_export mask.json ../mask.mif mask.nii  
+fi
+# Fit the DTI and DKI using DIPY's dipy_fit_dki
+dipy_fit_dki  --force \
+              --out_dt_tensor ${dwi}_dt.nii \
+              --out_fa ${dwi}_fa.nii \
+              --out_ga ${dwi}_ga.nii \
+              --out_rgb ${dwi}_rgb.nii \
+              --out_md ${dwi}_md.nii \
+              --out_ad ${dwi}_ad.nii \
+              --out_rd ${dwi}_rd.nii \
+              --out_mode ${dwi}_mode.nii \
+              --out_evec ${dwi}_evec.nii \
+              --out_eval ${dwi}_eval.nii \
+              --out_dk_tensor ${dwi}_dk.nii \
+              --out_mk ${dwi}_mk.nii \
+              --out_ak ${dwi}_ak.nii \
+              --out_rk ${dwi}_rk.nii \
+              $dwi.nii $dwi.bval $dwi.bvec mask.nii 
+# Calculate the Trace from eval
+mrmath -force ${dwi}_eval.nii -axis 3 sum ${dwi}_trace.nii
+
+cd $currdir
 
 
 
