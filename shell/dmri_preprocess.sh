@@ -17,7 +17,7 @@ Arguments:
 Options:
   -s / -session-file		Session file to depict which files should go into preprocessing. Overrides defaults below (default: derivatives/dMRI/sub-\$sID/ses-\$ssID/session_QC.tsv)
   -dwi				dMRI AP data (default: \$datadir/dwi/orig/sub-sID_ses-ssID_dir-AP_dwi.nii)
-  -protocol			This defines MRI protocol [OLD/NEW]; OLD = no fmap dir-PA and use vol 0 as b0 value for dir-AP; NEW = fmap dir-PA and 7b0 values for dir-AP) (default: OLD)
+  -protocol			This defines MRI protocol [ORIG/NEW]; ORIG = no fmap dir-PA and use vol 0 as b0 value for dir-AP; NEW = fmap dir-PA and 7b0 values for dir-AP) (default: ORIG)
   -threads			Number of threads for MRtrix commands (default: 4)
   -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-\$sID/ses-\$ssID)
   -h / -help / --help           Print usage.
@@ -38,7 +38,7 @@ currdir=$PWD
 # Defaults
 sessionfile=derivatives/dMRI/sub-$sID/ses-$ssID/session_QC.tsv
 threads=4
-protocol=OLD
+protocol=ORIG
 # assign default for datadir and dwi dependent on if we have the default sessionfile
 if [ ! -f $sessionfile ]; then
     dwi=$datadir/dwi/orig/sub-${sID}_ses-${ssID}_dir-AP_dwi.nii
@@ -143,8 +143,8 @@ if [ ! $sessionfile == No_sessionfile ]; then
 							-fslgrad $datadir/$filedir/$filebase.bvec $datadir/$filedir/$filebase.bval \
 							$datadir/$filedir/$filebase.nii $datadir/dwi/preproc/dwiAP.mif
 						;;
-					OLD)
-				 		echo "We have OLD protocol"
+					ORIG)
+				 		echo "We have ORIG protocol"
 						mrconvert -json_import $datadir/$filedir/$filebase.json \
 							-fslgrad $datadir/$filedir/$filebase.bvec $datadir/$filedir/$filebase.bval \
 							$datadir/$filedir/$filebase.nii $datadir/dwi/preproc/tmp_dwiAP.mif
@@ -169,10 +169,10 @@ if [ ! $sessionfile == No_sessionfile ]; then
 		volb0PA=`echo "$line" | awk '{ print $9 }'` #(dMRI_vol_for_b0PA = 9th column)
 		if [ ! $volb0PA == "-" ]; then
 		    if [ ! -f $datadir/dwi/preproc/topup/b0PA.mif ]; then
-			#Finn 2023-03-31: change to extract one volb0PA, which was not done in OLD
+			#Finn 2023-03-31: change to extract one volb0PA, which was not done in ORIG
 			mrconvert $datadir/$filedir/$filebase.nii -json_import $datadir/$filedir/$filebase.json - | \
 			    mrconvert -coord 3 $volb0PA -axes 0,1,2 - $datadir/dwi/preproc/topup/b0PA.mif
-			    #OLD mrconvert $datadir/$filedir/$filebase.nii -json_import $datadir/$filedir/$filebase.json $datadir/dwi/preproc/topup/b0PA.mif
+			    #ORIG mrconvert $datadir/$filedir/$filebase.nii -json_import $datadir/$filedir/$filebase.json $datadir/dwi/preproc/topup/b0PA.mif
 		    fi
 		fi
 	    fi
@@ -337,7 +337,7 @@ cd $currdir
 
 cd $datadir/dwi/preproc
 
-echo "Pre-processing with mask generation and (NOTENOTE - currently omitted) N4 biasfield correction"
+echo "Pre-processing with mask generation N4 biasfield correction"
 
 # point to right filebase
 dwi=dwi_den_unr_eddy
@@ -362,7 +362,7 @@ fi
 #
 ## Uncomment below if to use again
 if [ ! -f  ${dwi}_N4.mif ]; then
-    if [ ! -d N4 ]; then mkdir N4;fi
+    if [ ! -d N4 ]; then mkdir N4; fi
     # Add number of threads used
     dwibiascorrect ants -mask mask.mif -bias N4/bias.mif -nthreads $threads $dwi.mif ${dwi}_N4.mif
 fi
@@ -378,11 +378,15 @@ cd $currdir
 
 cd $datadir/dwi
 
-echo "b0-normalisation and meanb0,1000,2000 generation"
+echo "Performing b0-normalisation and meanb0,1000,2000 generation"
 
 # Create symbolic link to last file in /preproc and copy mask.mif to $datadir/dwi
-mrconvert preproc/$dwipreproclast dwi_preproc.mif
-mrconvert preproc/mask.mif mask.mif
+if [ ! -f dwi_preproc.mif ]; then 
+	mrconvert preproc/$dwipreproclast dwi_preproc.mif
+fi
+if [ ! -f mask.mif ]; then 
+	mrconvert preproc/mask.mif mask.mif
+fi
 dwi=dwi_preproc
 
 # B0-normalisation
@@ -395,18 +399,19 @@ bvalues=`mrinfo -shell_bvalues ${dwi}_inorm.mif`
 for bvalue in $bvalues; do
     bfile=meanb$bvalue
     if [ $bvalue == 0 ]; then
-	if [ ! -f $bfile.mif ]; then
-	    dwiextract -shells $bvalue ${dwi}_inorm.mif - |  mrmath -force -axis 3 - mean $bfile.mif
-	fi
+		if [ ! -f $bfile.mif ]; then
+	    	dwiextract -shells $bvalue ${dwi}_inorm.mif - |  mrmath -force -axis 3 - mean $bfile.mif
+		fi
     fi
     
     if [ ! -f ${bfile}_brain.mif ]; then
-	dwiextract -shells $bvalue ${dwi}_inorm.mif - |  mrmath -force -axis 3 - mean - | mrcalc - mask.mif -mul ${bfile}_brain.mif
-	mrconvert $bfile.mif $bfile.nii
-	mrconvert ${bfile}_brain.mif ${bfile}_brain.nii
-	echo "Visually check the ${bfile}_brain.mif"
-	echo mrview ${bfile}_brain.mif -mode 2
-    fi
+		dwiextract -shells $bvalue ${dwi}_inorm.mif - |  mrmath -force -axis 3 - mean ${bfile}.mif
+		dwiextract -shells $bvalue ${dwi}_inorm.mif - |  mrmath -force -axis 3 - mean - | mrcalc - mask.mif -mul ${bfile}_brain.mif
+		mrconvert $bfile.mif $bfile.nii
+		mrconvert ${bfile}_brain.mif ${bfile}_brain.nii
+		echo "Visually check the ${bfile}_brain.mif"
+		echo mrview ${bfile}_brain.mif -mode 2
+	fi
 done
 
 cd $currdir
