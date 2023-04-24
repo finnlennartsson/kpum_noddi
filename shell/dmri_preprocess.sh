@@ -390,7 +390,7 @@ if [ ! -f sub-${sID}_ses-${ssID}_desc-preproc_dwi.mif ]; then
 	mrconvert preproc/$dwipreproclast sub-${sID}_ses-${ssID}_desc-preproc_dwi.mif
 fi
 if [ ! -f sub-${sID}_ses-${ssID}_space-dmri_mask.mif ]; then 
-	mrconvert preproc/mask.mif sub-${sID}_ses-${ssID}_space-dmri_mask.mif
+	mrconvert preproc/mask.mif sub-${sID}_ses-${ssID}_space-dwi_mask.mif
 fi
 
 dwisuffix=sub-${sID}_ses-${ssID}_desc-preproc
