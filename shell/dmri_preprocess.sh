@@ -135,15 +135,14 @@ if [ ! $sessionfile == No_sessionfile ]; then
 		if [ $dwiAP == 1 ]; then		    
 		    if [ ! -f $datadir/dwi/preproc/dwiAP.mif ]; then 
 
-				# We have NEW protocol and can use all our b0s
 				case $protocol in
-					NEW)
+					NEW) # We have NEW protocol and can use all our b0s
 				 		echo "We have NEW protocol"
 						mrconvert -json_import $datadir/$filedir/$filebase.json \
 							-fslgrad $datadir/$filedir/$filebase.bvec $datadir/$filedir/$filebase.bval \
 							$datadir/$filedir/$filebase.nii $datadir/dwi/preproc/dwiAP.mif
 						;;
-					ORIG)
+					ORIG) # We have ORIG protocol only use one b0
 				 		echo "We have ORIG protocol"
 						mrconvert -json_import $datadir/$filedir/$filebase.json \
 							-fslgrad $datadir/$filedir/$filebase.bvec $datadir/$filedir/$filebase.bval \
@@ -300,31 +299,37 @@ cd $datadir/dwi/preproc
 scratchdir=dwifslpreproc
 
 if [ ! -f dwi_den_unr_eddy.mif ];then
-    
-    if [ -f topup/b0APPA.mif ]; then # We have b0APPA and can use TOPUP+EDDY
-	dwifslpreproc -se_epi topup/b0APPA.mif -rpe_header -align_seepi \
-		      -nocleanup \
-		      -scratch $scratchdir \
-		      -topup_options " --iout=field_mag_unwarped" \
-		      -eddy_options " --slm=linear --repol --mporder=8 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 --estimate_move_by_susceptibility --mbs_niter=20 --mbs_ksp=10 --mbs_lambda=10 " \
-		      -eddyqc_all eddy \
-		      -nthreads $threads \
-		      dwi_den_unr.mif \
-		      dwi_den_unr_eddy.mif;
-    else # We don't have b0APPA and cannot run TOPUP, and instead EDDY only with motion- and EC-correction
-	TRT=`mrinfo -property TotalReadoutTime dwi_den_unr.mif`
-	PEdir=`mrinfo -property PhaseEncodingDirection dwi_den_unr.mif`
-	dwifslpreproc -rpe_none -pe_dir $PEdir -readout_time $TRT \
-		      -nocleanup \
-		      -scratch $scratchdir \
-		      -eddy_options " --slm=linear --repol --mporder=8 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 --mbs_niter=20 --mbs_ksp=10 --mbs_lambda=10 " \
-		      -eddyqc_all eddy \
-		      -nthreads $threads \
-		      dwi_den_unr.mif \
-		      dwi_den_unr_eddy.mif;
-    fi
-    # Now cleanup by transferring relevant files to topup folder and deleting scratch folder
-    mv eddy/quad ../../qc/.
+
+	case $protocol in
+		NEW) # We have NEW protocol and can use all our b0s
+			echo "We have NEW protocol"    
+			dwifslpreproc -se_epi topup/b0APPA.mif -rpe_header -align_seepi \
+					-nocleanup \
+					-scratch $scratchdir \
+					-topup_options " --iout=field_mag_unwarped" \
+					-eddy_options " --slm=linear --repol --mporder=8 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 --estimate_move_by_susceptibility --mbs_niter=20 --mbs_ksp=10 --mbs_lambda=10 " \
+					-eddyqc_all eddy \
+					-nthreads $threads \
+					dwi_den_unr.mif \
+					dwi_den_unr_eddy.mif;
+					;;
+		ORIG) # We don't have b0APPA and cannot run TOPUP, and instead EDDY only with motion- and EC-correction
+			TRT=`mrinfo -property TotalReadoutTime dwi_den_unr.mif`
+			PEdir=`mrinfo -property PhaseEncodingDirection dwi_den_unr.mif`
+			dwifslpreproc -rpe_none -pe_dir $PEdir -readout_time $TRT \
+					-nocleanup \
+					-scratch $scratchdir \
+					-eddy_options " --slm=linear --repol --mporder=8 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 --mbs_niter=20 --mbs_ksp=10 --mbs_lambda=10 " \
+					-eddyqc_all eddy \
+					-nthreads $threads \
+					dwi_den_unr.mif \
+					dwi_den_unr_eddy.mif;
+					;;
+	esac;
+# Now cleanup by transferring relevant files to topup folder and deleting scratch folder
+    if [ -d eddy/quad ]; then 
+		mv eddy/quad ../../qc/. 
+	fi
     cp $scratchdir/command.txt $scratchdir/log.txt $scratchdir/eddy_*.txt $scratchdir/applytopup_*.txt $scratchdir/slspec.txt eddy/.
     mv $scratchdir/field_* $scratchdir/topup_* topup/.
     rm -rf $scratchdir;
@@ -378,41 +383,46 @@ cd $currdir
 
 cd $datadir/dwi
 
-echo "Performing b0-normalisation and meanb0,1000,2000 generation"
+echo "Performing b0-normalisation and meanb0, meanb1000 and meanb2000 generation"
 
 # Create symbolic link to last file in /preproc and copy mask.mif to $datadir/dwi
-if [ ! -f dwi_preproc.mif ]; then 
-	mrconvert preproc/$dwipreproclast dwi_preproc.mif
+if [ ! -f sub-${sID}_ses-${ssID}_desc-preproc_dwi.mif ]; then 
+	mrconvert preproc/$dwipreproclast sub-${sID}_ses-${ssID}_desc-preproc_dwi.mif
 fi
-if [ ! -f mask.mif ]; then 
-	mrconvert preproc/mask.mif mask.mif
+if [ ! -f sub-${sID}_ses-${ssID}_space-dmri_mask.mif ]; then 
+	mrconvert preproc/mask.mif sub-${sID}_ses-${ssID}_space-dmri_mask.mif
 fi
-dwi=dwi_preproc
+
+dwisuffix=sub-${sID}_ses-${ssID}_desc-preproc
+mask=sub-${sID}_ses-${ssID}_space-dwi_mask
 
 # B0-normalisation
-if [ ! -f ${dwi}_inorm.mif ]; then
-    dwinormalise individual $dwi.mif mask.mif ${dwi}_inorm.mif
+if [ ! -f ${dwisuffix}-inorm_dwi.mif ]; then
+    dwinormalise individual ${dwisuffix}_dwi.mif $mask.mif ${dwisuffix}-inorm_dwi.mif
 fi
 
+# Update dwisuffix
+dwisuffix=sub-${sID}_ses-${ssID}_desc-preproc-inorm
+
 # Extract mean b0, b1000 and b2000
-bvalues=`mrinfo -shell_bvalues ${dwi}_inorm.mif`
+bvalues=`mrinfo -shell_bvalues ${dwisuffix}_dwi.mif`
 for bvalue in $bvalues; do
     bfile=meanb$bvalue
-    if [ $bvalue == 0 ]; then
-		if [ ! -f $bfile.mif ]; then
-	    	dwiextract -shells $bvalue ${dwi}_inorm.mif - |  mrmath -force -axis 3 - mean $bfile.mif
-		fi
-    fi
-    
-    if [ ! -f ${bfile}_brain.mif ]; then
-		dwiextract -shells $bvalue ${dwi}_inorm.mif - |  mrmath -force -axis 3 - mean ${bfile}.mif
-		dwiextract -shells $bvalue ${dwi}_inorm.mif - |  mrmath -force -axis 3 - mean - | mrcalc - mask.mif -mul ${bfile}_brain.mif
-		mrconvert $bfile.mif $bfile.nii
-		mrconvert ${bfile}_brain.mif ${bfile}_brain.nii
-		echo "Visually check the ${bfile}_brain.mif"
-		echo mrview ${bfile}_brain.mif -mode 2
+    if [ ! -f ${dwisuffix}_$bfile.mif ]; then
+		dwiextract -shells $bvalue ${dwisuffix}_dwi.mif - |  mrmath -force -axis 3 - mean ${dwisuffix}_$bfile.mif
+		mrcalc -force ${dwisuffix}_$bfile.mif $mask.mif -mul ${dwisuffix}-brain_$bfile.mif
+		echo "Visually check the ${dwisuffix}-brain_$bfile.mif"
+		echo mrview ${dwisuffix}-brain_$bfile.mif -mode 2
 	fi
 done
+
+# Finally, make NIfTI-versions of ${dwi}_inorm.mif and mask.mif
+if [ ! -f ${dwisuffix}_dwi.nii ]; then
+	mrconvert -json_export ${dwisuffix}_dwi.json -export_grad_fsl ${dwisuffix}_dwi.bvec ${dwisuffix}_dwi.bval ${dwisuffix}_dwi.mif ${dwisuffix}_dwi.nii
+fi
+if [ ! -f $mask.nii ]; then
+	mrconvert -json_export $mask.json $mask.mif $mask.nii
+fi
 
 cd $currdir
 
