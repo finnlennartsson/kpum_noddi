@@ -97,6 +97,12 @@ cat $codedir/$script.sh >> ${logdir}/sub-${sID}_ses-${ssID}_$script.log 2>&1
 echo
 
 ##################################################################################
+# Config
+
+# Make sure we have FSLOUTPUTTYPE=NIFTI
+export FSLOUTPUTTYPE=NIFTI
+
+##################################################################################
 # 0. Create subfolder structure in $datadir
 
 cd $datadir
