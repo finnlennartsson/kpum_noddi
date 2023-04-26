@@ -13,7 +13,7 @@ Arguments:
   sID         Subject ID (e.g. 001) 
   ssID        Session ID (e.g. MR2)
 Options:
-  -dwi				dMRI preprocessed data in MRtrix .mif format (default: \$datadir/dwi/sub-sID_ses-ssID_desc-preproc-inorm_dwi.mif
+  -dwi				dMRI preprocessed data in MRtrix .mif format (default: \$datadir/dwi/sub-sID_ses-ssID_dir-AP_desc-preproc-inorm_dwi.mif
   -mask				Brain mask in .mif format (default: \$datadir/dwi/sub-sID_ses-ssID_space-dwi_mask.mif)
   -threads			Number of threads for MRtrix commands (default: 4)
   -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID)
@@ -55,7 +55,7 @@ done
 
 # Defaults cont'd
 if [ $dwi=="" ]; then
-  dwi=$datadir/dwi/sub-${sID}_ses-${ssID}_desc-preproc-inorm_dwi.mif
+  dwi=$datadir/dwi/sub-${sID}_ses-${ssID}_dir-AP_desc-preproc-inorm_dwi.mif
 fi
 if [ $mask=="" ]; then
   mask=$datadir/dwi/sub-${sID}_ses-${ssID}_space-dwi_mask.mif
@@ -97,7 +97,7 @@ if [ ! -d $datadir/dwi ]; then mkdir -p $datadir/dwi; fi
 ##################################################################################
 # 1. Create $dwibase.mif in $datadir/dwi if does not exist
 
-dwisuffix=sub-${sID}_ses-${ssID}_desc-preproc-inorm; 
+dwisuffix=sub-${sID}_ses-${ssID}_dir-AP_desc-preproc-inorm; 
 masksuffix=sub-${sID}_ses-${ssID}_space-dwi;
 if [ ! -f $datadir/dwi/${dwisuffix}_dwi.mif ]; then mrconvert $dwi $datadir/dwi/${dwisuffix}_dwi.mif; fi
 if [ ! -f $datadir/dwi/${masksuffix}_mask.mif ]; then mrconvert $mask $datadir/dwi/${masksuffix}_mask.mif; fi

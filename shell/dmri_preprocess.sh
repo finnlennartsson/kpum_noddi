@@ -392,14 +392,14 @@ cd $datadir/dwi
 echo "Performing b0-normalisation and meanb0, meanb1000 and meanb2000 generation"
 
 # Create symbolic link to last file in /preproc and copy mask.mif to $datadir/dwi
-if [ ! -f sub-${sID}_ses-${ssID}_desc-preproc_dwi.mif ]; then 
-	mrconvert preproc/$dwipreproclast sub-${sID}_ses-${ssID}_desc-preproc_dwi.mif
+if [ ! -f sub-${sID}_ses-${ssID}_dir-AP_desc-preproc_dwi.mif ]; then 
+	mrconvert preproc/$dwipreproclast sub-${sID}_ses-${ssID}_dir-AP_desc-preproc_dwi.mif
 fi
 if [ ! -f sub-${sID}_ses-${ssID}_space-dmri_mask.mif ]; then 
 	mrconvert preproc/mask.mif sub-${sID}_ses-${ssID}_space-dwi_mask.mif
 fi
 
-dwisuffix=sub-${sID}_ses-${ssID}_desc-preproc
+dwisuffix=sub-${sID}_ses-${ssID}_dir-AP_desc-preproc
 mask=sub-${sID}_ses-${ssID}_space-dwi_mask
 
 # B0-normalisation
@@ -408,7 +408,7 @@ if [ ! -f ${dwisuffix}-inorm_dwi.mif ]; then
 fi
 
 # Update dwisuffix
-dwisuffix=sub-${sID}_ses-${ssID}_desc-preproc-inorm
+dwisuffix=sub-${sID}_ses-${ssID}_dir-AP_desc-preproc-inorm
 
 # Extract mean b0, b1000 and b2000
 bvalues=`mrinfo -shell_bvalues ${dwisuffix}_dwi.mif`
