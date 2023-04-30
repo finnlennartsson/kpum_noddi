@@ -1,4 +1,21 @@
 #!/bin/bash
+# KPUM NODDI
+#
+usage()
+{
+  base=$(basename "$0")
+  echo "usage: $base sID ssID [options]
+dMRI pipeline
+
+Arguments:
+  sID               Subject ID (e.g. PMR001) 
+  ssID              Session ID (e.g. MR2)
+Options:
+  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID)
+  -h / -help / --help           Print usage.
+"
+  exit;
+}
 
 
 
