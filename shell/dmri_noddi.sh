@@ -130,7 +130,7 @@ cd $currdir
 
 ##################################################################################
 ## 1. NODDI estimation
-# Output files (nii.gz by default) are saved AMICO/NODDI_dPar 
+# Output files (nii.gz by default) and are saved in AMICO/NODDI 
 
 python3 code/kpum_noddi/python/dmri_noddi.py \
         --derivatives $derivatives \
@@ -141,17 +141,18 @@ python3 code/kpum_noddi/python/dmri_noddi.py \
         --mask $mask.nii \
         --dPar $dPar
 
-##################################################################################
-
-##################################################################################
-## 2. Rename output files
-
-# only works when dPar is input in the format 0.0015
+# Rename output files
 dParStr=`echo $dPar | sed 's/\./p/g'`
-cd $derivatives/$subjectdata/AMICO/NODDI_dPar-$dParStr
+cd $datadir/AMICO/NODDI
 for file in *.nii.gz; do
-    gunzip $file
-    mv $file ${dwisuffix}_recon-NODDI-dPar-${dParStr}_$file
+  mv $file ${dwisuffix}_recon-NODDI-dPar-${dParStr}_$file
+  gunzip ${dwisuffix}_recon-NODDI-dPar-${dParStr}_$file
 done
+# and move everything to $datadir/noddi
+cd ../..
+if [ ! -d noddi ]; then mkdir noddi; fi
+mv AMICO/NODDI/* noddi/.
+rm -rf AMICO/NODDI
 cd $currdir
+
 ##################################################################################

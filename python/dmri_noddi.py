@@ -52,6 +52,7 @@ ae.load_kernels()
 # Fit NODDI model
 ae.fit()
 # Save the results
-ae.save_results(path_suffix='dPar=%s' % (dPar))
+ae.save_results()
+#ae.save_results(path_suffix='dPar=%s' % (dPar))
 #dParstr = str(dPar).replace('.','p')
 #ae.save_results(path_suffix=f'dPar-{dParstr}')
