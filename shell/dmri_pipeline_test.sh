@@ -4,7 +4,7 @@
 usage()
 {
   base=$(basename "$0")
-  echo "usage: $base sID ssID [options]
+  echo "usage: $base sID ssID studydir [options]
 Semi "looked-down" script for running the KPUM NODDI dMRI pipeline
 
 Arguments:
@@ -83,11 +83,10 @@ echo
 ########################################
 ## START
 
-
 echo codedir is $codedir
-echo 
 echo ls $studydir 
 ls $studydir
+echo
 
 
 startTotal=$SECONDS
@@ -113,7 +112,7 @@ processfile=$process.sh
 # Run processfile
 echo "START - $process"
 starttime=$SECONDS
-bash $codedir/$processfile $sID $ssID -d $datadir;
+bash $codedir/$processfile $sID $ssID $studydir -d $datadir;
 endtime=$SECONDS
 # Print timing
 runtime_s=$(($endtime - $starttime)); 
