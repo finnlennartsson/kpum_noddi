@@ -12,7 +12,7 @@ Arguments:
   ssID                          Session ID (e.g. MR1)
 Options:
   -tsv                          Subject tracker tsv-file (default: \$derivatives/Subject_Tracker_for_dmri_pipeline.tsv)
-  -p / protocol                 MRI protocol used in study [ORIG/NEW] (default: Orig) 
+  -p / protocol                 MRI protocol used in study [ORIG/NEW] (default: ORIG) 
   -d / -derivatives <directory> The base derivatives directory (default: derivatives/dMRI)
   -dPar                         Parallel diffusivity for the NODDI model (default: 0.0017)
   -t / -threads                 Number of CPU threads (default: 4) 
@@ -33,7 +33,6 @@ currdir=$PWD
 # Defaults
 protocol=ORIG
 derivatives=derivatives/dMRI
-tsvfile=$derivatives/Subject_Tracker_for_dmri_pipeline.tsv
 dPar=0.0017
 threads=4
 
@@ -53,6 +52,9 @@ while [ $# -gt 0 ]; do
     esac
     shift
 done
+
+# Defaults cont'd
+tsvfile=$derivatives/Subject_Tracker_for_dmri_pipeline.tsv
 
 datadir=$derivatives/sub-$sID/ses-$ssID
 # Get the code directory from which this script is executed (i.e. the /shell directory)
