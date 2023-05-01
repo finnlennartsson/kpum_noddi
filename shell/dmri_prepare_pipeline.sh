@@ -22,9 +22,9 @@ Arguments:
   ssID							Session ID (e.g. MR2)
   studydir                      Studydir with full path (e.g. \$PWD or /mnt/e/Finn/KPUM_NODDI/Data)
 Options:
-  -s / session-file				session.tsv that list files in nifti/sub-sID/ses-ssID that should be used! Overrides options below (default: nifti/sub-sID/ses-ssID/session_QC.tsv)
-  -dwi							dMRI DKI data (default: nifti/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-AP_dwi.nii)
-  -d / -data-dir <directory>	The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID)
+  -s / session-file				session.tsv that list files in nifti/sub-sID/ses-ssID that should be used! Overrides options below (default: \$studydir/nifti/sub-sID/ses-ssID/session_QC.tsv)
+  -dwi							dMRI DKI data (default: \$studydir/nifti/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-AP_dwi.nii)
+  -d / -data-dir <directory>	The directory used to output the preprocessed files (default: \$studydir/derivatives/dMRI/sub-sID/ses-ssID)
   -h / -help / --help			Print usage.
 "
   exit;
