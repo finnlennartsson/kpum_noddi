@@ -58,7 +58,9 @@ done
 # Defaults cont'd
 tsvfile=$derivatives/Subject_Tracker_for_dmri_pipeline.tsv
 
+# Set Variables
 datadir=$derivatives/sub-$sID/ses-$ssID
+
 # Get the code directory from which this script is executed (i.e. the /shell directory)
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 

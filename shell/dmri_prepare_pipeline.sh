@@ -20,6 +20,7 @@ Also copies the session.tsv (if present nifti/sub-\$sID/ses-\$ssID) into \$datad
 Arguments:
   sID							Subject ID (e.g. 001) 
   ssID							Session ID (e.g. MR2)
+  studydir                      Studydir with full path (e.g. \$PWD or /mnt/e/Finn/KPUM_NODDI/Data)
 Options:
   -s / session-file				session.tsv that list files in nifti/sub-sID/ses-ssID that should be used! Overrides options below (default: nifti/sub-sID/ses-ssID/session_QC.tsv)
   -dwi							dMRI DKI data (default: nifti/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-AP_dwi.nii)
@@ -31,18 +32,19 @@ Options:
 
 ################ ARGUMENTS ################
 
-[ $# -ge 2 ] || { usage; }
+[ $# -ge 3 ] || { usage; }
 command=$@
 sID=$1
 ssID=$2
-shift; shift
+studydir=$3
+shift; shift; shift
 
 currdir=$PWD
 
 # Defaults
-dwi=nifti/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-AP_dwi.nii
-datadir=derivatives/dMRI/sub-$sID/ses-$ssID
-sessionfile=nifti/sub-$sID/ses-$ssID/session_QC.tsv
+dwi=$studydir/nifti/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-AP_dwi.nii
+datadir=$studydir/derivatives/dMRI/sub-$sID/ses-$ssID
+sessionfile=$studydir/nifti/sub-$sID/ses-$ssID/session_QC.tsv
 
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -65,21 +67,23 @@ if [ ! -f $dwi ]; then dwi=""; fi
 
 if [ ! $sessionfile == "" ]; then
 echo "Preparing for dMRI pipeline
-Subject:           $sID 
-Session:           $ssID
-Session file:      $sessionfile
-Data directory:    $datadir 
+Subject:			$sID 
+Session:			$ssID
+Studydir:			$studydir
+Session file:		$sessionfile
+Data directory:		$datadir 
 
-$BASH_SOURCE       $command
+$BASH_SOURCE		$command
 ----------------------------"
 else    
 echo "Preparing for dMRI pipeline
-Subject:       	$sID 
-Session:        $ssID
-DWI (DKI):		$dwi
-Directory:     	$datadir 
+Subject:			$sID 
+Session:			$ssID
+Studydir:			$studydir
+DWI (DKI):			$dwi
+Directory:			$datadir 
 
-$BASH_SOURCE   	$command
+$BASH_SOURCE		$command
 ----------------------------"
 fi
 

@@ -79,10 +79,51 @@ $BASH_SOURCE   	$command
 ----------------------------"
 echo
 
+
 ########################################
 ## START
+
 
 echo codedir is $codedir
 echo 
 echo ls $studydir 
 ls $studydir
+
+
+startTotal=$SECONDS
+ -
+# Stop entry in $tsvfile then exit
+if [ -f $tsvfile ]; then
+  stoptest=`cat $tsvfile | grep sub-$sID | grep ses-$ssID | grep Stop`
+  if [ ! -z $stoptest ]; then
+    # $stoptest is not empty = we have Stop entry in $tsvfile
+    echo "Entry with Stop in $tsvfile - we have to exit here"
+    exit;
+  fi
+fi
+
+# Log the process with Check if subjecttrackertsv-file if not exists
+tsvprocesslist=""
+tsvprocesslistsubjectchecklist=""
+
+######################################################################################################
+## Process to perform - dmri_prepare_pipeline
+process=dmri_prepare_pipeline
+processfile=$process.sh
+# Run processfile
+echo "START - $process"
+starttime=$SECONDS
+bash $codedir/$processfile $sID $ssID -d $datadir;
+endtime=$SECONDS
+# Print timing
+runtime_s=$(($endtime - $starttime)); 
+runtime_m=$(printf %.3f $(echo "$runtime_s/60" | bc -l));
+echo "END - $process"
+echo "Runtime was $runtime_m [min]"
+# update tsv-list
+tsvprocesslistupdated=`echo -e "$tsvprocesslist\t$process\t$process comments"` 
+tsvprocesslist=$tsvprocesslistupdated
+tsvprocesslistsubjectchecklistupdated=`echo -e "$tsvprocesslistsubjectchecklist\tDone\t"`
+tsvprocesslistsubjectchecklist=$tsvprocesslistsubjectchecklistupdated
+echo 
+######################################################################################################
