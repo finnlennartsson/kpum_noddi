@@ -14,7 +14,7 @@ Arguments:
 Options:
   -tsv                          Subject tracker tsv-file (default: \$derivatives/Subject_Tracker_for_dmri_pipeline.tsv)
   -p / protocol                 MRI protocol used in study [ORIG/NEW] (default: ORIG) 
-  -d / -derivatives <directory> The base derivatives directory in \$studydir (default: derivatives/dMRI)
+  -d / -derivatives <directory> The base derivatives directory (default: \$studydir/derivatives/dMRI)
   -dPar                         Parallel diffusivity for the NODDI model (default: 0.0017)
   -t / -threads                 Number of CPU threads (default: 4) 
   -h / -help / --help           Print usage.
