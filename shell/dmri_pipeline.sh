@@ -23,7 +23,7 @@ Options:
 }
 
 
-[ $# -ge 2 ] || { usage; }
+[ $# -ge 3 ] || { usage; }
 command=$@
 sID=$1
 ssID=$2
