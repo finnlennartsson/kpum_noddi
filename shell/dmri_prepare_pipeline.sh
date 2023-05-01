@@ -116,7 +116,7 @@ cd $currdir
 
 if [ -f $sessionfile ]; then
     # Use files listed in "session.tsv" file, which refer to file on session level in BIDS rawdata directory
-    niftidir=nifti/sub-$sID/ses-$ssID
+    niftidir=$studydir/nifti/sub-$sID/ses-$ssID
     # Read $sessionfile, copy files and meanwhile create a local session_QC.tsv in $datadir
     echo "Transfer data in $sessionfile which has qc_pass_fail = 1 or 0.5"
     {
