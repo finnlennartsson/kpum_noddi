@@ -10,10 +10,11 @@ Semi "looked-down" script for running the KPUM NODDI dMRI pipeline
 Arguments:
   sID                           Subject ID (e.g. 035) 
   ssID                          Session ID (e.g. MR1)
+  studydir                      Studydir with full path (e.g. \$PWD or /mnt/e/Finn/KPUM_NODDI/Data)
 Options:
   -tsv                          Subject tracker tsv-file (default: \$derivatives/Subject_Tracker_for_dmri_pipeline.tsv)
   -p / protocol                 MRI protocol used in study [ORIG/NEW] (default: ORIG) 
-  -d / -derivatives <directory> The base derivatives directory (default: derivatives/dMRI)
+  -d / -derivatives <directory> The base derivatives directory in \$studydir (default: derivatives/dMRI)
   -dPar                         Parallel diffusivity for the NODDI model (default: 0.0017)
   -t / -threads                 Number of CPU threads (default: 4) 
   -h / -help / --help           Print usage.
@@ -26,13 +27,14 @@ Options:
 command=$@
 sID=$1
 ssID=$2
-shift; shift
+studydir=$3
+shift; shift; shift
 
 currdir=$PWD
 
 # Defaults
 protocol=ORIG
-derivatives=derivatives/dMRI
+derivatives=$studydir/derivatives/dMRI
 dPar=0.0017
 threads=4
 
@@ -64,6 +66,7 @@ echo
 echo "KPUM NODDI dMRI pipeline
 Subject:       	$sID 
 Session:        $ssID
+Studydir:       $studydir
 MRI Protocol:   $protocol
 Derivatives:    $derivatives
 TSV file:       $tsvfile
