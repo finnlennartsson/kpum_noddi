@@ -11,12 +11,12 @@ Arguments:
   sID         Subject ID (e.g. 001) 
   ssID        Session ID (e.g. MR2)
 Options:
-  -derivatives          Derivatives folder (default: derivatives/dMRI_op)
+  -derivatives          Derivatives folder (default: derivatives/dMRI)
   -subjectdata          Subject datafolder in derivatives folder which harbors dMRI data (default: sub-sID/ses-ssID/dwi)
   -dwi                  Preprocessed and intensity normalised dMRI in .mif format (default: \$derivatives/\$subjectdata/sub-sID_ses-ssID_dir-AP_desc-preproc-inorm_dwi.mif)
   -mask                 Brain mask in .mif format (default: \$derivatives/\$subjectdata/sub-sID_ses-ssID_space-dwi_mask.mif)
   -dPar                 Axial diffusivity to use for NODDI (default: 0.0017)
-  -threads              Number of threads for MRtrix commands (default: 4)
+  -t / threads              Number of threads for MRtrix commands (default: 4)
   -h / -help / --help   Print usage.
 "
   exit;
@@ -46,14 +46,14 @@ while [ $# -gt 0 ]; do
     case "$1" in
     -derivatives) shift; derivatives=$1; ;;
     -subjectdata) shift; subjectdata=$1; ;;
-	-dwi) shift; dwi=$1; ;;
-	-mask) shift; mask=$1; ;;
-	-dPar) shift; dPar=$1; ;;
-	-threads) shift; threads=$1; ;;
-	-d|-data-dir)  shift; datadir=$1; ;;
-	-h|-help|--help) usage; ;;
-	-*) echo "$0: Unrecognized option $1" >&2; usage; ;;
-	*) break ;;
+	  -dwi) shift; dwi=$1; ;;
+	  -mask) shift; mask=$1; ;;
+	  -dPar) shift; dPar=$1; ;;
+	  -t|-threads) shift; threads=$1; ;;
+	  -d|-data-dir)  shift; datadir=$1; ;;
+	  -h|-help|--help) usage; ;;
+	  -*) echo "$0: Unrecognized option $1" >&2; usage; ;;
+	  *) break ;;
     esac
     shift
 done
@@ -71,14 +71,15 @@ fi
 
 # Check if images exist, else put in No_image
 if [ ! -f $dwi ]; then dwi="No_image"; fi
-if [ ! -f $mask ]; then dwi="No_image"; fi
+if [ ! -f $mask ]; then mask="No_image"; fi
 
-echo "DTI and DKI estimation
+echo "NODDI estimation
 Subject:       	$sID 
 Session:        $ssID
+Derivatives:    $derivatives
+Subjectdata:    $subjectdata
 DWI (AP):       $dwi
 Mask:           $mask
-Directory:      $datadir
 dPar:           $dPar           
 Threads:        $threads
  
@@ -89,8 +90,8 @@ logdir=$datadir/logs
 if [ ! -d $datadir ]; then mkdir -p $datadir; fi
 if [ ! -d $logdir ]; then mkdir -p $logdir; fi
 
-echo dMRI preprocessing on subject $sID and session $ssID
 script=`basename $0 .sh`
+echo "Running $script on subject $sID and session $ssID"
 timestamp=`date`
 echo On $timestamp, executing: $codedir/$script.sh $command > ${logdir}/sub-${sID}_ses-${ssID}_$script.log 2>&1
 echo "" >> ${logdir}/sub-${sID}_ses-${ssID}_$script.log 2>&1
@@ -132,27 +133,29 @@ cd $currdir
 ## 1. NODDI estimation
 # Output files (nii.gz by default) and are saved in AMICO/NODDI 
 
-python3 code/kpum_noddi/python/dmri_noddi.py \
-        --derivatives $derivatives \
-        --subjectdata $subjectdata \
-        --dwi $dwi.nii \
-        --bvec $dwi.bvec \
-        --bval $dwi.bval \
-        --mask $mask.nii \
-        --dPar $dPar
-
-# Rename output files
 dParStr=`echo $dPar | sed 's/\./p/g'`
-cd $datadir/AMICO/NODDI
-for file in *.nii.gz; do
-  mv $file ${dwisuffix}_recon-NODDI-dPar-${dParStr}_$file
-  gunzip ${dwisuffix}_recon-NODDI-dPar-${dParStr}_$file
-done
-# and move everything to $datadir/noddi
-cd ../..
-if [ ! -d noddi ]; then mkdir noddi; fi
-mv AMICO/NODDI/* noddi/.
-rm -rf AMICO/NODDI
-cd $currdir
+
+if [ ! -f $datadir/noddi/${dwisuffix}_recon-NODDI-dPar-${dParStr}_FIT_ICVF.nii ] ; then
+  python3 code/kpum_noddi/python/dmri_noddi.py \
+          --derivatives $derivatives \
+          --subjectdata $subjectdata \
+          --dwi $dwi.nii \
+          --bvec $dwi.bvec \
+          --bval $dwi.bval \
+          --mask $mask.nii \
+          --dPar $dPar
+  # Rename output files
+  cd $datadir/AMICO/NODDI
+  for file in *.nii.gz; do
+    mv $file ${dwisuffix}_recon-NODDI-dPar-${dParStr}_$file
+    gunzip ${dwisuffix}_recon-NODDI-dPar-${dParStr}_$file
+  done
+  # and move everything to $datadir/noddi
+  cd ../..
+  if [ ! -d noddi ]; then mkdir noddi; fi
+  mv AMICO/NODDI/* noddi/.
+  rm -rf AMICO
+  cd $currdir
+fi
 
 ##################################################################################

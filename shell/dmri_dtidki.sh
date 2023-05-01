@@ -15,7 +15,7 @@ Arguments:
 Options:
   -dwi				dMRI preprocessed data in MRtrix .mif format (default: \$datadir/dwi/sub-sID_ses-ssID_dir-AP_desc-preproc-inorm_dwi.mif
   -mask				Brain mask in .mif format (default: \$datadir/dwi/sub-sID_ses-ssID_space-dwi_mask.mif)
-  -threads			Number of threads for MRtrix commands (default: 4)
+  -t / threads			Number of threads for MRtrix commands (default: 4)
   -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID)
   -h / -help / --help           Print usage.
 "
@@ -42,13 +42,13 @@ codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 while [ $# -gt 0 ]; do
     case "$1" in
-	-dwi) shift; dwi=$1; ;;
-	-mask) shift; mask=$1; ;;
-	-threads) shift; threads=$1; ;;
-	-d|-data-dir)  shift; datadir=$1; ;;
-	-h|-help|--help) usage; ;;
-	-*) echo "$0: Unrecognized option $1" >&2; usage; ;;
-	*) break ;;
+    -dwi) shift; dwi=$1; ;;
+    -mask) shift; mask=$1; ;;
+    -t|-threads) shift; threads=$1; ;;
+    -d|-data-dir)  shift; datadir=$1; ;;
+    -h|-help|--help) usage; ;;
+    -*) echo "$0: Unrecognized option $1" >&2; usage; ;;
+    *) break ;;
     esac
     shift
 done
@@ -80,8 +80,8 @@ logdir=$datadir/logs
 if [ ! -d $datadir ]; then mkdir -p $datadir; fi
 if [ ! -d $logdir ]; then mkdir -p $logdir; fi
 
-echo dMRI preprocessing on subject $sID and session $ssID
 script=`basename $0 .sh`
+echo "Running $script on subject $sID and session $ssID"
 timestamp=`date`
 echo On $timestamp, executing: $codedir/$script.sh $command > ${logdir}/sub-${sID}_ses-${ssID}_$script.log 2>&1
 echo "" >> ${logdir}/sub-${sID}_ses-${ssID}_$script.log 2>&1
@@ -132,34 +132,36 @@ cd $datadir/dwi
 
 # Make sure we have NIfTI-versions of $dwi and $mask
 if [ ! -f $dwi.nii ]; then
-  mrconvert  -json_export $dwi.json -export_grad_fsl $dwi.bvec $dwi.bval $dwi.mif $dwi.nii
+  mrconvert -json_export $dwi.json -export_grad_fsl $dwi.bvec $dwi.bval $dwi.mif $dwi.nii
 fi
 if [ ! -f mask.nii ]; then
-  mrconvert  -json_export $mask.json $mask.mif $mask.nii  
+  mrconvert -json_export $mask.json $mask.mif $mask.nii  
 fi
 
 if [ ! -d dki ]; then mkdir -p dki; fi
 cd dki
 
 # Fit the DTI and DKI using DIPY's dipy_fit_dki
-dipy_fit_dki  --force \
-              --out_dt_tensor ${dwi}_dt.nii \
-              --out_fa ${dwi}_fa.nii \
-              --out_ga ${dwi}_ga.nii \
-              --out_rgb ${dwi}_rgb.nii \
-              --out_md ${dwi}_md.nii \
-              --out_ad ${dwi}_ad.nii \
-              --out_rd ${dwi}_rd.nii \
-              --out_mode ${dwi}_mode.nii \
-              --out_evec ${dwi}_evec.nii \
-              --out_eval ${dwi}_eval.nii \
-              --out_dk_tensor ${dwi}_dk.nii \
-              --out_mk ${dwi}_mk.nii \
-              --out_ak ${dwi}_ak.nii \
-              --out_rk ${dwi}_rk.nii \
-              ../$dwi.nii ../$dwi.bval ../$dwi.bvec ../$mask.nii 
+if [ ! -f ${dwi}_dk.nii ]; then 
+  dipy_fit_dki  --force \
+                --out_dt_tensor ${dwi}_dt.nii \
+                --out_fa ${dwi}_fa.nii \
+                --out_ga ${dwi}_ga.nii \
+                --out_rgb ${dwi}_rgb.nii \
+                --out_md ${dwi}_md.nii \
+                --out_ad ${dwi}_ad.nii \
+                --out_rd ${dwi}_rd.nii \
+                --out_mode ${dwi}_mode.nii \
+                --out_evec ${dwi}_evec.nii \
+                --out_eval ${dwi}_eval.nii \
+                --out_dk_tensor ${dwi}_dk.nii \
+                --out_mk ${dwi}_mk.nii \
+                --out_ak ${dwi}_ak.nii \
+                --out_rk ${dwi}_rk.nii \
+                ../$dwi.nii ../$dwi.bval ../$dwi.bvec ../$mask.nii
+  mrmath -force ${dwi}_eval.nii -axis 3 sum ${dwi}_trace.nii
+fi 
 # Calculate the Trace from eval
-mrmath -force ${dwi}_eval.nii -axis 3 sum ${dwi}_trace.nii
 
 cd $currdir
 

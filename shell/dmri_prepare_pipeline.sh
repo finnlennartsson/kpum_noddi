@@ -64,32 +64,31 @@ if [ ! -f $sessionfile ]; then sessionfile=""; fi
 if [ ! -f $dwi ]; then dwi=""; fi
 
 if [ ! $sessionfile == "" ]; then
-    echo "Preparing for dMRI pipeline
-    Subject:           $sID 
-    Session:           $ssID
-    Session file:      $sessionfile
-    Data directory:    $datadir 
+echo "Preparing for dMRI pipeline
+Subject:           $sID 
+Session:           $ssID
+Session file:      $sessionfile
+Data directory:    $datadir 
 
-    $BASH_SOURCE       $command
-    ----------------------------"
-else
-    
-    echo "Preparing for dMRI pipeline
-    Subject:       	$sID 
-    Session:        $ssID
-    DWI (DKI):		$dwi
-    Directory:     	$datadir 
+$BASH_SOURCE       $command
+----------------------------"
+else    
+echo "Preparing for dMRI pipeline
+Subject:       	$sID 
+Session:        $ssID
+DWI (DKI):		$dwi
+Directory:     	$datadir 
 
-    $BASH_SOURCE   	$command
-    ----------------------------"
+$BASH_SOURCE   	$command
+----------------------------"
 fi
 
 logdir=$datadir/logs
 if [ ! -d $datadir ];then mkdir -p $datadir; fi
 if [ ! -d $logdir ];then mkdir -p $logdir; fi
 
-echo dMRI preprocessing on subject $sID and session $ssID
 script=`basename $0 .sh`
+echo "Running $script on subject $sID and session $ssID"
 echo Executing: $codedir/sMRI/$script.sh $command > ${logdir}/sub-${sID}_ses-${ssID}_$script.log 2>&1
 echo "" >> ${logdir}/sub-${sID}_ses-${ssID}_$script.log 2>&1
 echo "Printout $script.sh" >> ${logdir}/sub-${sID}_ses-${ssID}_$script.log 2>&1

@@ -12,15 +12,15 @@ Requires that folder structure for dMRI pipeline has been run (e.g. with script 
 3. N4 biasfield correction, Normalisation
 
 Arguments:
-  sID				Subject ID (e.g. 001) 
-  ssID                       	Session ID (e.g. MR2)
+  sID							Subject ID (e.g. 001) 
+  ssID							Session ID (e.g. MR2)
 Options:
-  -s / -session-file		Session file to depict which files should go into preprocessing. Overrides defaults below (default: derivatives/dMRI/sub-\$sID/ses-\$ssID/session_QC.tsv)
-  -dwi				dMRI AP data (default: \$datadir/dwi/orig/sub-sID_ses-ssID_dir-AP_dwi.nii)
-  -protocol			This defines MRI protocol [ORIG/NEW]; ORIG = no fmap dir-PA and use vol 0 as b0 value for dir-AP; NEW = fmap dir-PA and 7b0 values for dir-AP) (default: ORIG)
-  -threads			Number of threads for MRtrix commands (default: 4)
-  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-\$sID/ses-\$ssID)
-  -h / -help / --help           Print usage.
+  -s / -session-file			Session file to depict which files should go into preprocessing. Overrides defaults below (default: derivatives/dMRI/sub-\$sID/ses-\$ssID/session_QC.tsv)
+  -dwi							dMRI AP data (default: \$datadir/dwi/orig/sub-sID_ses-ssID_dir-AP_dwi.nii)
+  -p / protocol					This defines MRI protocol [ORIG/NEW]; ORIG = no fmap dir-PA and use vol 0 as b0 value for dir-AP; NEW = fmap dir-PA and 7b0 values for dir-AP) (default: ORIG)
+  -t / threads					Number of threads for MRtrix commands (default: 4)
+  -d / -data-dir  <directory>	The directory used to output the preprocessed files (default: derivatives/dMRI/sub-\$sID/ses-\$ssID)
+  -h / -help / --help			Print usage.
 "
   exit;
 }
@@ -56,8 +56,8 @@ while [ $# -gt 0 ]; do
     case "$1" in
 	-s|session-file) shift; sessionfile=$1; ;;
 	-dwi) shift; dwi=$1; ;;
-	-threads) shift; threads=$1; ;;
-	-protocol) shift; protocol=$1; ;;
+	-t|-threads) shift; threads=$1; ;;
+	-p|-protocol) shift; protocol=$1; ;;
 	-d|-data-dir)  shift; datadir=$1; ;;
 	-h|-help|--help) usage; ;;
 	-*) echo "$0: Unrecognized option $1" >&2; usage; ;;
@@ -87,8 +87,8 @@ logdir=$datadir/logs
 if [ ! -d $datadir ]; then mkdir -p $datadir; fi
 if [ ! -d $logdir ]; then mkdir -p $logdir; fi
 
-echo dMRI preprocessing on subject $sID and session $ssID
 script=`basename $0 .sh`
+echo "Running $script on subject $sID and session $ssID"
 timestamp=`date`
 echo On $timestamp, executing: $codedir/$script.sh $command > ${logdir}/sub-${sID}_ses-${ssID}_$script.log 2>&1
 echo "" >> ${logdir}/sub-${sID}_ses-${ssID}_$script.log 2>&1
@@ -395,7 +395,7 @@ echo "Performing b0-normalisation and meanb0, meanb1000 and meanb2000 generation
 if [ ! -f sub-${sID}_ses-${ssID}_dir-AP_desc-preproc_dwi.mif ]; then 
 	mrconvert preproc/$dwipreproclast sub-${sID}_ses-${ssID}_dir-AP_desc-preproc_dwi.mif
 fi
-if [ ! -f sub-${sID}_ses-${ssID}_space-dmri_mask.mif ]; then 
+if [ ! -f sub-${sID}_ses-${ssID}_space-dwi_mask.mif ]; then 
 	mrconvert preproc/mask.mif sub-${sID}_ses-${ssID}_space-dwi_mask.mif
 fi
 
