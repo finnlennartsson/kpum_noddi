@@ -99,7 +99,7 @@ fi
 
 # Log the process with Check if subjecttrackertsv-file if not exists
 tsvprocesslist=""
-tsvprocesslist_subjectchecklist=""
+tsvprocesslistsubjectchecklist=""
 
 ######################################################################################################
 ## Process to perform - dmri_prepare_pipeline
@@ -118,8 +118,8 @@ echo "Runtime was $runtime_m [min]"
 # update tsv-list
 tsvprocesslistupdated=`echo -e "$tsvprocesslist\t$process\t$process comments"` 
 tsvprocesslist=$tsvprocesslistupdated
-tsvprocesslist_subjectchecklistupdated=`echo -e "${tsvprocesslist_subjectchecklist}\tDone\t"`
-tsvprocesslist_subjectchecklist=$tsvprocesslist_subjectchecklistupdated
+tsvprocesslistsubjectchecklistupdated=`echo -e "${tsvprocesslistsubjectchecklist}\tDone\t"`
+tsvprocesslistsubjectchecklist=$tsvprocesslistsubjectchecklistupdated
 echo 
 ######################################################################################################
 
@@ -140,8 +140,8 @@ echo "Runtime was $runtime_m [min]"
 # update tsv-list
 tsvprocesslistupdated=`echo -e "$tsvprocesslist\t$process\t$process comments"` 
 tsvprocesslist=$tsvprocesslistupdated
-tsvprocesslist_subjectchecklistupdated=`echo -e "${tsvprocesslist_subjectchecklist}\tDone\t"`
-tsvprocesslist_subjectchecklist=$tsvprocesslistsubject_checklistupdated
+tsvprocesslistsubjectchecklistupdated=`echo -e "${tsvprocesslistsubjectchecklist}\tDone\t"`
+tsvprocesslistsubjectchecklist=$tsvprocesslistsubjectchecklistupdated
 echo 
 ######################################################################################################
 
@@ -211,4 +211,4 @@ if [ ! -f $tsvfile ]; then
 fi
 # update by adding 
 echo "Book keeping by adding a line at the bottom of $tsvfile"
-echo -e "sub-$sID\tses-${ssID}$tsvprocesslist_subjectchecklist" >> $derivatives/Subject_Tracker_for_dmri_pipeline.tsv
+echo -e "sub-$sID\tses-${ssID}${tsvprocesslistsubjectchecklist}" >> $derivatives/Subject_Tracker_for_dmri_pipeline.tsv
