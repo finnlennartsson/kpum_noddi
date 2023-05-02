@@ -44,8 +44,11 @@ Run scripts in the following order
 ## Running wrapper script
 Run script `dmri_pipeline.sh`  
 E.g. using these input variables
-```
-bash /home/finn/Code/kpum_noddi/shell/dmri_pipeline_test.sh 035 MR1 /mnt/s/Research/Projects/KPUM_NODDI/Data -derivatives /mnt/s/Research/Projects/KPUM_NODDI/Data/derivatives/dMRI_Testing7_dmri_pipeline
+```sh
+bash    /home/finn/Code/kpum_noddi/shell/dmri_pipeline_test.sh \
+        035 MR1 /mnt/s/Research/Projects/KPUM_NODDI/Data \
+        -derivatives /mnt/s/Research/Projects/KPUM_NODDI/Data/derivatives/dMRI_Testing7_dmri_pipeline \
+        -protocol ORIG
 ```
 
 
