@@ -12,7 +12,7 @@ Arguments:
   ssID                          Session ID (e.g. MR1)
   studydir                      Studydir with full path (e.g. \$PWD or /mnt/e/Finn/KPUM_NODDI/Data)
 Options:
-  -d / -derivatives <directory> The base derivatives directory (default: \$studydir/derivatives/dMRI)
+  -derivatives <directory>      The base derivatives directory (default: \$studydir/derivatives/dMRI)
   -tsv                          Subject tracker tsv-file (default: \$derivatives/Subject_Tracker_for_dmri_pipeline.tsv)
   -p / protocol                 MRI protocol used in study [ORIG/NEW] (default: ORIG) 
   -dPar                         Parallel diffusivity for the NODDI model (default: 0.0017)
@@ -45,7 +45,7 @@ while [ $# -gt 0 ]; do
     case "$1" in
     -tsv)  shift; tsvfile=$1; ;;
     -p|-protocol)  shift; protocol=$1; ;;
-    -d|-derivatives)  shift; derivatives=$1; ;;
+    -derivatives)  shift; derivatives=$1; ;;
     -dPar)  shift; dPar=$1; ;;
     -t|-threads)  shift; threads=$1; ;;
     -h|-help|--help) usage; ;;
@@ -85,7 +85,7 @@ echo
 ## START
 
 startTotal=$SECONDS
- -
+
 # Stop entry in $tsvfile then exit
 if [ -f $tsvfile ]; then
   stoptest=`cat $tsvfile | grep sub-$sID | grep ses-$ssID | grep Stop`
@@ -129,7 +129,7 @@ processfile=$process.sh
 starttime=$SECONDS
 echo "START - $process"
 # Run processfile
-bash $codedir/$processfile $sID $ssID -s $datadir/session_QC.tsv -d $datadir -p $protocol -t $threads;
+bash $codedir/$processfile $sID $ssID $studydir -s $datadir/session_QC.tsv -d $datadir -p $protocol -t $threads;
 endtime=$SECONDS
 runtime_s=$(($endtime - $starttime)); 
 runtime_m=$(printf %.3f $(echo "$runtime_s/60" | bc -l));
