@@ -8,16 +8,16 @@ usage()
 Script that calulcates NODDI parameters
 
 Arguments:
-  sID         Subject ID (e.g. 001) 
-  ssID        Session ID (e.g. MR2)
-  studydir                      Studydir with full path (e.g. \$PWD or /mnt/e/Finn/KPUM_NODDI/Data)
+  sID                   Subject ID (e.g. 001) 
+  ssID                  Session ID (e.g. MR2)
+  studydir              Studydir with full path (e.g. \$PWD or /mnt/e/Finn/KPUM_NODDI/Data)
 Options:
-  -derivatives          Derivatives folder (default: derivatives/dMRI)
+  -derivatives          Derivatives folder (default: \$studydir/derivatives/dMRI)
   -subjectdata          Subject datafolder in derivatives folder which harbors dMRI data (default: sub-sID/ses-ssID/dwi)
   -dwi                  Preprocessed and intensity normalised dMRI in .mif format (default: \$derivatives/\$subjectdata/sub-sID_ses-ssID_dir-AP_desc-preproc-inorm_dwi.mif)
   -mask                 Brain mask in .mif format (default: \$derivatives/\$subjectdata/sub-sID_ses-ssID_space-dwi_mask.mif)
   -dPar                 Axial diffusivity to use for NODDI (default: 0.0017)
-  -t / threads              Number of threads for MRtrix commands (default: 4)
+  -t / threads          Number of threads for MRtrix commands (default: 4)
   -h / -help / --help   Print usage.
 "
   exit;

@@ -180,7 +180,7 @@ mask=$derivatives/$subjectdata/sub-${sID}_ses-${ssID}_space-dwi_mask.mif
 # Run processfile
 echo "START - $process"
 starttime=$SECONDS
-bash $codedir/$processfile $sID $ssID -derivatives $derivatives -subjectdata $subjectdata -dwi $dwi -mask $mask -dPar $dPar -t $threads;
+bash $codedir/$processfile $sID $ssID $studydir -derivatives $derivatives -subjectdata $subjectdata -dwi $dwi -mask $mask -dPar $dPar -t $threads;
 endtime=$SECONDS
 echo "END - $process"
 # Print timing
