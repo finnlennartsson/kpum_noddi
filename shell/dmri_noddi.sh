@@ -4,12 +4,13 @@
 usage()
 {
   base=$(basename "$0")
-  echo "usage: $base sID ssID [options]
+  echo "usage: $base sID ssID studydir [options]
 Script that calulcates NODDI parameters
 
 Arguments:
   sID         Subject ID (e.g. 001) 
   ssID        Session ID (e.g. MR2)
+  studydir                      Studydir with full path (e.g. \$PWD or /mnt/e/Finn/KPUM_NODDI/Data)
 Options:
   -derivatives          Derivatives folder (default: derivatives/dMRI)
   -subjectdata          Subject datafolder in derivatives folder which harbors dMRI data (default: sub-sID/ses-ssID/dwi)
@@ -24,16 +25,17 @@ Options:
 
 ################ ARGUMENTS ################
 
-[ $# -ge 2 ] || { usage; }
+[ $# -ge 3 ] || { usage; }
 command=$@
 sID=$1
 ssID=$2
-shift; shift
+studydir=$3
+shift; shift; shift
 
 currdir=$PWD
 
 # Defaults
-derivatives=derivatives/dMRI
+derivatives=$studydir/derivatives/dMRI
 subjectdata=sub-$sID/ses-$ssID/dwi
 dwi=""; mask=""  # See below - Defaults cont'd
 threads=4
@@ -58,10 +60,10 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-# Now decided datadir
+# Now we have decided the $datadir
 datadir=$derivatives/$subjectdata
 
-# Defaults cont'd
+# Defaults cont'd since we have $datadir from above
 if [ $dwi=="" ]; then
   dwi=$datadir/sub-${sID}_ses-${ssID}_dir-AP_desc-preproc-inorm_dwi.mif
 fi
@@ -74,8 +76,10 @@ if [ ! -f $dwi ]; then dwi="No_image"; fi
 if [ ! -f $mask ]; then mask="No_image"; fi
 
 echo "NODDI estimation
+----------------------------
 Subject:       	$sID 
 Session:        $ssID
+Studydir:       $studydir
 Derivatives:    $derivatives
 Subjectdata:    $subjectdata
 DWI (AP):       $dwi
@@ -83,6 +87,7 @@ Mask:           $mask
 dPar:           $dPar           
 Threads:        $threads
  
+Codedir:        $codedir
 $BASH_SOURCE   	$command
 ----------------------------"
 
