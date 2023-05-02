@@ -4,7 +4,7 @@
 usage()
 {
   base=$(basename "$0")
-  echo "usage: $base sID ssID [options]
+  echo "usage: $base sID ssID studydir [options]
 Semi "looked-down" script for running the KPUM NODDI dMRI pipeline
 
 Arguments:
@@ -12,7 +12,7 @@ Arguments:
   ssID                          Session ID (e.g. MR1)
   studydir                      Studydir with full path (e.g. \$PWD or /mnt/e/Finn/KPUM_NODDI/Data)
 Options:
-  -d / -derivatives <directory> The base derivatives directory (default: \$studydir/derivatives/dMRI)
+  -derivatives <directory>      The base derivatives directory (default: \$studydir/derivatives/dMRI)
   -tsv                          Subject tracker tsv-file (default: \$derivatives/Subject_Tracker_for_dmri_pipeline.tsv)
   -p / protocol                 MRI protocol used in study [ORIG/NEW] (default: ORIG) 
   -dPar                         Parallel diffusivity for the NODDI model (default: 0.0017)
@@ -45,7 +45,7 @@ while [ $# -gt 0 ]; do
     case "$1" in
     -tsv)  shift; tsvfile=$1; ;;
     -p|-protocol)  shift; protocol=$1; ;;
-    -d|-derivatives)  shift; derivatives=$1; ;;
+    -derivatives)  shift; derivatives=$1; ;;
     -dPar)  shift; dPar=$1; ;;
     -t|-threads)  shift; threads=$1; ;;
     -h|-help|--help) usage; ;;
@@ -66,6 +66,7 @@ codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 echo
 echo "KPUM NODDI dMRI pipeline
+----------------------------
 Subject:       	$sID 
 Session:        $ssID
 Studydir:       $studydir
@@ -75,12 +76,15 @@ TSV file:       $tsvfile
 dPar for NODDI: $dPar
 Threads:        $threads
 
+CodeDir:        $codedir
 $BASH_SOURCE   	$command
 ----------------------------"
 echo
 
+
 ########################################
 ## START
+
 startTotal=$SECONDS
 
 # Stop entry in $tsvfile then exit
@@ -95,27 +99,27 @@ fi
 
 # Log the process with Check if subjecttrackertsv-file if not exists
 tsvprocesslist=""
-tsvprocesslistsubjectchecklist=""
+tsvprocesslist_subjectchecklist=""
 
 ######################################################################################################
 ## Process to perform - dmri_prepare_pipeline
 process=dmri_prepare_pipeline
 processfile=$process.sh
-starttime=$SECONDS
 # Run processfile
 echo "START - $process"
-bash $codedir/$processfile $sID $ssID -d $datadir;
+starttime=$SECONDS
+bash $codedir/$processfile $sID $ssID $studydir -d $datadir;
 endtime=$SECONDS
+echo "END - $process"
 # Print timing
 runtime_s=$(($endtime - $starttime)); 
 runtime_m=$(printf %.3f $(echo "$runtime_s/60" | bc -l));
-echo "END - $process"
 echo "Runtime was $runtime_m [min]"
 # update tsv-list
 tsvprocesslistupdated=`echo -e "$tsvprocesslist\t$process\t$process comments"` 
 tsvprocesslist=$tsvprocesslistupdated
-tsvprocesslistsubjectchecklistupdated=`echo -e "$tsvprocesslistsubjectchecklist\tDone\t"`
-tsvprocesslistsubjectchecklist=$tsvprocesslistsubjectchecklistupdated
+tsvprocesslist_subjectchecklistupdated=`echo -e "${tsvprocesslist_subjectchecklist}\tDone\t"`
+tsvprocesslist_subjectchecklist=$tsvprocesslist_subjectchecklistupdated
 echo 
 ######################################################################################################
 
@@ -123,20 +127,21 @@ echo
 ## Process to perform - dmri_preprocess
 process=dmri_preprocess
 processfile=$process.sh
-starttime=$SECONDS
-echo "START - $process"
 # Run processfile
-bash $codedir/$processfile $sID $ssID -s $datadir/session_QC.tsv -d $datadir -p $protocol -t $threads;
+echo "START - $process"
+starttime=$SECONDS
+bash $codedir/$processfile $sID $ssID $studydir -s $datadir/session_QC.tsv -d $datadir -p $protocol -t $threads;
 endtime=$SECONDS
+echo "END - $process"
+# Print timing
 runtime_s=$(($endtime - $starttime)); 
 runtime_m=$(printf %.3f $(echo "$runtime_s/60" | bc -l));
-echo "END - $process"
 echo "Runtime was $runtime_m [min]"
 # update tsv-list
 tsvprocesslistupdated=`echo -e "$tsvprocesslist\t$process\t$process comments"` 
 tsvprocesslist=$tsvprocesslistupdated
-tsvprocesslistsubjectchecklistupdated=`echo -e "$tsvprocesslistsubjectchecklist\tDone\t"`
-tsvprocesslistsubjectchecklist=$tsvprocesslistsubjectchecklistupdated
+tsvprocesslist_subjectchecklistupdated=`echo -e "${tsvprocesslist_subjectchecklist}\tDone\t"`
+tsvprocesslist_subjectchecklist=$tsvprocesslistsubject_checklistupdated
 echo 
 ######################################################################################################
 
@@ -144,16 +149,17 @@ echo
 ## Process to perform - dmri_dtidki
 process=dmri_dtidki
 processfile=$process.sh
-starttime=$SECONDS
-echo "START - $process"
 dwi=$datadir/dwi/sub-${sID}_ses-${ssID}_dir-AP_desc-preproc-inorm_dwi.mif
 mask=$datadir/dwi/sub-${sID}_ses-${ssID}_space-dwi_mask.mif
 # Run processfile
-bash $codedir/$processfile $sID $ssID -d $datadir -dwi $dwi -mask $mask -t $threads;
+echo "START - $process"
+starttime=$SECONDS
+bash $codedir/$processfile $sID $ssID $studydir -d $datadir -dwi $dwi -mask $mask -t $threads;
 endtime=$SECONDS
+echo "END - $process"
+# Print timing
 runtime_s=$(($endtime - $starttime)); 
 runtime_m=$(printf %.3f $(echo "$runtime_s/60" | bc -l));
-echo "END - $process"
 echo "Runtime was $runtime_m [min]"
 # update tsv-list
 tsvprocesslistupdated=`echo -e "$tsvprocesslist\t$process\t$process comments"` 
@@ -167,20 +173,19 @@ echo
 ## Process to perform - dmri_noddi
 process=dmri_noddi
 processfile=$process.sh
-starttime=$SECONDS
-echo "START - $process"
 # input to process
-tmpdir=`dirname $datadir`
-derivatives=`dirname $tmpdir`
 subjectdata=sub-${sID}/ses-${ssID}/dwi
 dwi=$derivatives/$subjectdata/sub-${sID}_ses-${ssID}_dir-AP_desc-preproc-inorm_dwi.mif
 mask=$derivatives/$subjectdata/sub-${sID}_ses-${ssID}_space-dwi_mask.mif
 # Run processfile
-bash $codedir/$processfile $sID $ssID -derivatives $derivatives -subjectdata $subjectdata -dwi $dwi -mask $mask -dPar $dPar -t $threads;
+echo "START - $process"
+starttime=$SECONDS
+bash $codedir/$processfile $sID $ssID $studydir -derivatives $derivatives -subjectdata $subjectdata -dwi $dwi -mask $mask -dPar $dPar -t $threads;
 endtime=$SECONDS
+echo "END - $process"
+# Print timing
 runtime_s=$(($endtime - $starttime)); 
 runtime_m=$(printf %.3f $(echo "$runtime_s/60" | bc -l));
-echo "END - $process"
 echo "Runtime was $runtime_m [min]"
 # update tsv-list
 tsvprocesslistupdated=`echo -e "$tsvprocesslist\t$process\t$process comments"` 
@@ -189,7 +194,6 @@ tsvprocesslistsubjectchecklistupdated=`echo -e "$tsvprocesslistsubjectchecklist\
 tsvprocesslistsubjectchecklist=$tsvprocesslistsubjectchecklistupdated
 echo 
 ######################################################################################################
-
 
 ######################################################################################################
 # Finish by stating how long it took
@@ -207,4 +211,4 @@ if [ ! -f $tsvfile ]; then
 fi
 # update by adding 
 echo "Book keeping by adding a line at the bottom of $tsvfile"
-echo -e "sub-$sID\tses-${ssID}$tsvprocesslistsubjectchecklist" >> $derivatives/Subject_Tracker_for_dmri_pipeline.tsv
+echo -e "sub-$sID\tses-${ssID}$tsvprocesslist_subjectchecklist" >> $derivatives/Subject_Tracker_for_dmri_pipeline.tsv

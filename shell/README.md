@@ -45,7 +45,8 @@ Run scripts in the following order
 Run script `dmri_pipeline.sh`  
 E.g. using these input variables
 ```sh
-bash    /home/finn/Code/kpum_noddi/shell/dmri_pipeline_test.sh \
+codedir=/home/finn/Code/kpum_noddi/shell
+bash    $codedir/dmri_pipeline.sh \
         035 MR1 /mnt/s/Research/Projects/KPUM_NODDI/Data \
         -derivatives /mnt/s/Research/Projects/KPUM_NODDI/Data/derivatives/dMRI_Testing7_dmri_pipeline \
         -protocol ORIG
