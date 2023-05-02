@@ -75,6 +75,7 @@ if [ ! -f $dwi ]; then dwi=""; fi
 if [ ! -f $sessionfile ]; then sessionfile="No_sessionfile"; fi
 
 echo "dMRI preprocessing
+----------------------------
 Subject:       	$sID 
 Session:        $ssID
 Studydir:		$studydir

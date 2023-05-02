@@ -67,6 +67,7 @@ if [ ! -f $dwi ]; then dwi=""; fi
 
 if [ ! $sessionfile == "" ]; then
 echo "Preparing for dMRI pipeline
+----------------------------
 Subject:			$sID 
 Session:			$ssID
 Studydir:			$studydir
@@ -77,6 +78,7 @@ $BASH_SOURCE		$command
 ----------------------------"
 else    
 echo "Preparing for dMRI pipeline
+----------------------------
 Subject:			$sID 
 Session:			$ssID
 Studydir:			$studydir

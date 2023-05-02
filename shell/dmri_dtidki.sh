@@ -10,13 +10,14 @@ Script that calculates tensor and kurtosis parameters from preprocessed dMRI dat
 2. Estimation of diffusion kurtosis and calcuation of kurtosis metrics (incl DTI) on b0+b1000+b2000 data (output in subdirectory /dki)
 
 Arguments:
-  sID         Subject ID (e.g. 001) 
-  ssID        Session ID (e.g. MR2)
+  sID                           Subject ID (e.g. 001) 
+  ssID                          Session ID (e.g. MR2)
+  studydir                      Studydir with full path (e.g. \$PWD or /mnt/e/Finn/KPUM_NODDI/Data)
 Options:
-  -dwi				dMRI preprocessed data in MRtrix .mif format (default: \$datadir/dwi/sub-sID_ses-ssID_dir-AP_desc-preproc-inorm_dwi.mif
-  -mask				Brain mask in .mif format (default: \$datadir/dwi/sub-sID_ses-ssID_space-dwi_mask.mif)
-  -t / threads			Number of threads for MRtrix commands (default: 4)
-  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID)
+  -dwi                          dMRI preprocessed data in MRtrix .mif format (default: \$datadir/dwi/sub-sID_ses-ssID_dir-AP_desc-preproc-inorm_dwi.mif
+  -mask                         Brain mask in .mif format (default: \$datadir/dwi/sub-sID_ses-ssID_space-dwi_mask.mif)
+  -t / threads                  Number of threads for MRtrix commands (default: 4)
+  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: \$studydir/derivatives/dMRI/sub-sID/ses-ssID)
   -h / -help / --help           Print usage.
 "
   exit;
@@ -24,16 +25,17 @@ Options:
 
 ################ ARGUMENTS ################
 
-[ $# -ge 2 ] || { usage; }
+[ $# -ge 3 ] || { usage; }
 command=$@
 sID=$1
 ssID=$2
-shift; shift
+studydir=$3
+shift; shift; shift
 
 currdir=$PWD
 
 # Defaults
-datadir=derivatives/dMRI/sub-$sID/ses-$ssID
+datadir=$studydir/derivatives/dMRI/sub-$sID/ses-$ssID
 dwi=""; mask=""  # See below - Defaults cont'd
 threads=4
 
@@ -66,13 +68,16 @@ if [ ! -f $dwi ]; then dwi="No_image"; fi
 if [ ! -f $mask ]; then dwi="No_image"; fi
 
 echo "DTI and DKI estimation
+----------------------------
 Subject:       	$sID 
 Session:        $ssID
+Studydir:       $studydir
 DWI (AP):       $dwi
 Mask:           $mask
 Directory:      $datadir
 Threads:        $threads
  
+Codedir:        $codedir
 $BASH_SOURCE   	$command
 ----------------------------"
 
