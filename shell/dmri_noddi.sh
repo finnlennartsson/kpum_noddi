@@ -141,7 +141,7 @@ cd $currdir
 dParStr=`echo $dPar | sed 's/\./p/g'`
 
 if [ ! -f $datadir/noddi/${dwisuffix}_recon-NODDI-dPar-${dParStr}_FIT_ICVF.nii ] ; then
-  python3 code/kpum_noddi/python/dmri_noddi.py \
+  python3 $codedir/../python/dmri_noddi.py \
           --derivatives $derivatives \
           --subjectdata $subjectdata \
           --dwi $dwi.nii \
