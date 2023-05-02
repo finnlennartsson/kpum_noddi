@@ -34,9 +34,19 @@ Also runs the BIDS validator.
 Bash scripts to process dMRI data in `derivatives`
 All scripts working on the BIDS rawdata have prefix `dmri_`
 
+## Running invidivdual scripts
+Run scripts in the following order
 1. Run script `dmri_prepare_pipeline.sh`  
-This prepares the pipeline by copying the relavant files into 
 2. Run script `dmri_preprocess.sh`
 3. Run script `dmri_dtidki.sh`
 4. Run script `dmri_noddi.sh`
+
+## Running wrapper script
+Run script `dmri_pipeline.sh`  
+E.g. using these input variables
+```
+bash /home/finn/Code/kpum_noddi/shell/dmri_pipeline_test.sh 035 MR1 /mnt/s/Research/Projects/KPUM_NODDI/Data -derivatives /mnt/s/Research/Projects/KPUM_NODDI/Data/derivatives/dMRI_Testing7_dmri_pipeline
+```
+
+
 
