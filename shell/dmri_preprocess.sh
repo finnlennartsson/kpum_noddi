@@ -4,7 +4,7 @@
 usage()
 {
   base=$(basename "$0")
-  echo "usage: $base subjectID sessionID [options]
+  echo "usage: $base subjectID sessionID studydir [options]
 Script to preprocess dMRI data 
 Requires that folder structure for dMRI pipeline has been run (e.g. with script dmri_prepare_pipeline.sh)
 1. MP-PCA Denoising and Gibbs Unringing 
@@ -14,12 +14,13 @@ Requires that folder structure for dMRI pipeline has been run (e.g. with script 
 Arguments:
   sID							Subject ID (e.g. 001) 
   ssID							Session ID (e.g. MR2)
+  studydir                      Studydir with full path (e.g. \$PWD or /mnt/e/Finn/KPUM_NODDI/Data)
 Options:
-  -s / -session-file			Session file to depict which files should go into preprocessing. Overrides defaults below (default: derivatives/dMRI/sub-\$sID/ses-\$ssID/session_QC.tsv)
+  -s / -session-file			Session file to depict which files should go into preprocessing. Overrides defaults below (default: \$studydir/derivatives/dMRI/sub-\$sID/ses-\$ssID/session_QC.tsv)
   -dwi							dMRI AP data (default: \$datadir/dwi/orig/sub-sID_ses-ssID_dir-AP_dwi.nii)
   -p / protocol					This defines MRI protocol [ORIG/NEW]; ORIG = no fmap dir-PA and use vol 0 as b0 value for dir-AP; NEW = fmap dir-PA and 7b0 values for dir-AP) (default: ORIG)
   -t / threads					Number of threads for MRtrix commands (default: 4)
-  -d / -data-dir  <directory>	The directory used to output the preprocessed files (default: derivatives/dMRI/sub-\$sID/ses-\$ssID)
+  -d / -data-dir  <directory>	The directory used to output the preprocessed files (default: \$studydir/derivatives/dMRI/sub-\$sID/ses-\$ssID)
   -h / -help / --help			Print usage.
 "
   exit;
@@ -27,16 +28,18 @@ Options:
 
 ################ ARGUMENTS ################
 
-[ $# -ge 2 ] || { usage; }
+[ $# -ge 3 ] || { usage; }
 command=$@
 sID=$1
 ssID=$2
-shift; shift
+studydir=$3
+shift; shift; shift
 
 currdir=$PWD
 
 # Defaults
-sessionfile=derivatives/dMRI/sub-$sID/ses-$ssID/session_QC.tsv
+datadir=$studydir/derivatives/dMRI/sub-$sID/ses-$ssID
+sessionfile=$studydir/derivatives/dMRI/sub-$sID/ses-$ssID/session_QC.tsv
 threads=4
 protocol=ORIG
 # assign default for datadir and dwi dependent on if we have the default sessionfile
@@ -74,12 +77,14 @@ if [ ! -f $sessionfile ]; then sessionfile="No_sessionfile"; fi
 echo "dMRI preprocessing
 Subject:       	$sID 
 Session:        $ssID
+Studydir:		$studydir
 Session file:	$sessionfile
-DWI (AP):	$dwi
+DWI (AP):		$dwi
 MRI Protocol:	$protocol
-Threads:	$threads
+Threads:		$threads
 DataDirectory:	$datadir
 
+Codedir:		$codedir
 $BASH_SOURCE   	$command
 ----------------------------"
 
@@ -216,8 +221,8 @@ if [ ! -f topup/b0APPA.mif ]; then
 	else	
 	    echo "No b0APPA.mif or pair of b0AP.mif and b0PA.mif are present to use with TOPUP
 	          1. Do this by putting one good b0 from dir-AP_dwi and dir-PA_dwi into a file b0APPA.mif into $datadir/dwi/preproc/topup
-		  2. The same b0 from dir-AP_dwi should be put 1st in the dir-AP_dwi dataset, as dwifslpreprocess will use the 1st b0 in dir-AP and replace the first b0 in b0APPA with
-		  3. Run this script again.     
+			  2. The same b0 from dir-AP_dwi should be put 1st in the dir-AP_dwi dataset, as dwifslpreprocess will use the 1st b0 in dir-AP and replace the first b0 in b0APPA with
+			  3. Run this script again.     
     	 	  "
 	    exit;
 	fi
@@ -230,33 +235,32 @@ if [ ! -f dwi.mif ]; then
 
     # If we can use topup (i.e. we have the file topup/b0APPA.mif) then we need to re-arrange in dwiAP
     if [ -f topup/b0APPA.mif ]; then
-	# 1. extract higher shells and put in a joint file
-	dwiextract -shells 1000,2000 dwiAP.mif tmp_dwiAP_b1000b2000.mif	
-	# 2. Sort out b0s
-	# a) extract the b0 that will be used for TOPUP by
-	b0topup=$b0APvol;
-	# b) and put in /topup/tmp_b0$dir.mif
-	mrconvert -coord 3 $b0topup -axes 0,1,2 dwiAP.mif topup/tmp_b0AP.mif
-	# c) and extract b0s from dwiAP.mif where the b0 for TOPUP will be placed first (by creating and an indexlist)
-	indexlist=$b0topup;
-	for index in `mrinfo -shell_indices dwiAP.mif | awk '{print $1}' | sed 's/\,/\ /g'`; do
-	    if [ ! $index == $b0topup ]; then
-		indexlist=`echo $indexlist,$index`;
-	fi
-	done
-	echo "Extracting b0-values in order $indexlist from dwiAP.mif, i.e. extracting volume $b0topup for TOPUP first";
-	mrconvert -coord 3 $indexlist dwiAP.mif tmp_dwiAP_b0.mif
-	
-	
-	# Put everything into file dwi.mif, with AP followed by PA volumes
-	# FL 2021-12-20 - NOTE TOPUP and EDDY not working properly for dirPA, so only use dirAP to go into dwi.mif
-	mrcat -axis 3 tmp_dwiAP_b0.mif tmp_dwiAP_b1000b2000.mif dwi.mif
-	
-	# clean-up
-	rm tmp_dwi*.mif* tmp_b0AP.mif*
-	
-    else # We don't have possibility to use TOPUP, so dwiAP.mif as it is becoms dwi.mif
-	mrconvert dwiAP.mif dwi.mif
+		# 1. extract higher shells and put in a joint file
+		dwiextract -shells 1000,2000 dwiAP.mif tmp_dwiAP_b1000b2000.mif	
+		# 2. Sort out b0s
+		# a) extract the b0 that will be used for TOPUP by
+		b0topup=$b0APvol;
+		# b) and put in /topup/tmp_b0$dir.mif
+		mrconvert -coord 3 $b0topup -axes 0,1,2 dwiAP.mif topup/tmp_b0AP.mif
+		# c) and extract b0s from dwiAP.mif where the b0 for TOPUP will be placed first (by creating and an indexlist)
+		indexlist=$b0topup;
+		for index in `mrinfo -shell_indices dwiAP.mif | awk '{print $1}' | sed 's/\,/\ /g'`; do
+			if [ ! $index == $b0topup ]; then
+				indexlist=`echo $indexlist,$index`;
+			fi
+		done
+		echo "Extracting b0-values in order $indexlist from dwiAP.mif, i.e. extracting volume $b0topup for TOPUP first";
+		mrconvert -coord 3 $indexlist dwiAP.mif tmp_dwiAP_b0.mif
+		
+		# Put everything into file dwi.mif, with AP followed by PA volumes
+		# FL 2021-12-20 - NOTE TOPUP and EDDY not working properly for dirPA, so only use dirAP to go into dwi.mif
+		mrcat -axis 3 tmp_dwiAP_b0.mif tmp_dwiAP_b1000b2000.mif dwi.mif
+		
+		# clean-up
+		rm tmp_dwi*.mif* tmp_b0AP.mif*
+		
+	else # We don't have possibility to use TOPUP, so dwiAP.mif as it is becoms dwi.mif
+		mrconvert dwiAP.mif dwi.mif
     fi	
     
 fi

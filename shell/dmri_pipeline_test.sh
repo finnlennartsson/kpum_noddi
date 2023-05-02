@@ -75,6 +75,7 @@ TSV file:       $tsvfile
 dPar for NODDI: $dPar
 Threads:        $threads
 
+CodeDir:        $codedir
 $BASH_SOURCE   	$command
 ----------------------------"
 echo
@@ -82,12 +83,6 @@ echo
 
 ########################################
 ## START
-
-echo codedir is $codedir
-echo ls $studydir 
-ls $studydir
-echo
-
 
 startTotal=$SECONDS
  -
@@ -103,7 +98,7 @@ fi
 
 # Log the process with Check if subjecttrackertsv-file if not exists
 tsvprocesslist=""
-tsvprocesslistsubjectchecklist=""
+tsvprocesslist_subjectchecklist=""
 
 ######################################################################################################
 ## Process to perform - dmri_prepare_pipeline
@@ -122,7 +117,47 @@ echo "Runtime was $runtime_m [min]"
 # update tsv-list
 tsvprocesslistupdated=`echo -e "$tsvprocesslist\t$process\t$process comments"` 
 tsvprocesslist=$tsvprocesslistupdated
-tsvprocesslistsubjectchecklistupdated=`echo -e "$tsvprocesslistsubjectchecklist\tDone\t"`
-tsvprocesslistsubjectchecklist=$tsvprocesslistsubjectchecklistupdated
+tsvprocesslist_subjectchecklistupdated=`echo -e "${tsvprocesslist_subjectchecklist}\tDone\t"`
+tsvprocesslist_subjectchecklist=$tsvprocesslist_subjectchecklistupdated
 echo 
 ######################################################################################################
+
+######################################################################################################
+## Process to perform - dmri_preprocess
+process=dmri_preprocess
+processfile=$process.sh
+starttime=$SECONDS
+echo "START - $process"
+# Run processfile
+bash $codedir/$processfile $sID $ssID -s $datadir/session_QC.tsv -d $datadir -p $protocol -t $threads;
+endtime=$SECONDS
+runtime_s=$(($endtime - $starttime)); 
+runtime_m=$(printf %.3f $(echo "$runtime_s/60" | bc -l));
+echo "END - $process"
+echo "Runtime was $runtime_m [min]"
+# update tsv-list
+tsvprocesslistupdated=`echo -e "$tsvprocesslist\t$process\t$process comments"` 
+tsvprocesslist=$tsvprocesslistupdated
+tsvprocesslist_subjectchecklistupdated=`echo -e "${tsvprocesslist_subjectchecklist}\tDone\t"`
+tsvprocesslist_subjectchecklist=$tsvprocesslistsubject_checklistupdated
+echo 
+######################################################################################################
+
+
+######################################################################################################
+# Finish by stating how long it took
+endTotal=$SECONDS
+runtime_s=$(($endTotal - $startTotal)); 
+runtime_m=$(printf %.3f $(echo "$runtime_s/60" | bc -l));
+echo "Finished - $0"
+echo "Runtime was $runtime_m [min]"
+echo 
+
+# Now update or create tsv-file 
+if [ ! -f $tsvfile ]; then 
+  # we have to create $tsvfile
+  echo -e "participant_id\tsession_id$tsvprocesslist" > $derivatives/Subject_Tracker_for_dmri_pipeline.tsv
+fi
+# update by adding 
+echo "Book keeping by adding a line at the bottom of $tsvfile"
+echo -e "sub-$sID\tses-${ssID}$tsvprocesslist_subjectchecklist" >> $derivatives/Subject_Tracker_for_dmri_pipeline.tsv
