@@ -74,6 +74,7 @@ Studydir:			$studydir
 Session file:		$sessionfile
 Data directory:		$datadir 
 
+Codedir:			$codedir
 $BASH_SOURCE		$command
 ----------------------------"
 else    
@@ -85,6 +86,7 @@ Studydir:			$studydir
 DWI (DKI):			$dwi
 Directory:			$datadir 
 
+Codedir:			$codedir
 $BASH_SOURCE		$command
 ----------------------------"
 fi
@@ -172,5 +174,4 @@ else
 	fi	
     done
 fi
-
 ##################################################################################
