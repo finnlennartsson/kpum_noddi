@@ -314,7 +314,8 @@ if [ ! -f dwi_den_unr_eddy.mif ];then
 	case $protocol in
 		NEW) # We have NEW protocol and can use all our b0s
 			echo "We have NEW protocol"    
-			# Finn L 2022-05-03: exclude -eddyqc_all eddy not work with upgrade. Should be possible to run eddy_quad afterwards 
+			# Finn L 2022-05-03: exclude "-eddyqc_all eddy" in dwifslpreproc call as eddy_quad is not working properly after upgrade. 
+			# Have updated eddy_quad as suggested ($FSLDIR/bin/update_fsl_package -u fsl-eddy_qc), but not yet tested it. Should be possible to run eddy_quad afterwards 
 			dwifslpreproc -se_epi topup/b0APPA.mif -rpe_header -align_seepi \
 					-nocleanup \
 					-scratch $scratchdir \
@@ -327,7 +328,8 @@ if [ ! -f dwi_den_unr_eddy.mif ];then
 		ORIG) # We don't have b0APPA and cannot run TOPUP, and instead EDDY only with motion- and EC-correction
 			TRT=`mrinfo -property TotalReadoutTime dwi_den_unr.mif`
 			PEdir=`mrinfo -property PhaseEncodingDirection dwi_den_unr.mif`
-			# Finn L 2022-05-03: exclude -eddyqc_all eddy not work with upgrade. Should be possible to run eddy_quad afterwards 
+			# Finn L 2022-05-03: exclude "-eddyqc_all eddy" in dwifslpreproc call as eddy_quad is not working properly after upgrade. 
+			# Have updated eddy_quad as suggested ($FSLDIR/bin/update_fsl_package -u fsl-eddy_qc), but not yet tested it. Should be possible to run eddy_quad afterwards 
 			dwifslpreproc -rpe_none -pe_dir $PEdir -readout_time $TRT \
 					-nocleanup \
 					-scratch $scratchdir \
