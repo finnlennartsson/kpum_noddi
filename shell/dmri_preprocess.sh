@@ -314,12 +314,12 @@ if [ ! -f dwi_den_unr_eddy.mif ];then
 	case $protocol in
 		NEW) # We have NEW protocol and can use all our b0s
 			echo "We have NEW protocol"    
+			# Finn L 2022-05-03: exclude -eddyqc_all eddy not work with upgrade. Should be possible to run eddy_quad afterwards 
 			dwifslpreproc -se_epi topup/b0APPA.mif -rpe_header -align_seepi \
 					-nocleanup \
 					-scratch $scratchdir \
 					-topup_options " --iout=field_mag_unwarped" \
 					-eddy_options " --slm=linear --repol --mporder=8 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 --estimate_move_by_susceptibility --mbs_niter=20 --mbs_ksp=10 --mbs_lambda=10 " \
-					-eddyqc_all eddy \
 					-nthreads $threads \
 					dwi_den_unr.mif \
 					dwi_den_unr_eddy.mif;
@@ -327,18 +327,19 @@ if [ ! -f dwi_den_unr_eddy.mif ];then
 		ORIG) # We don't have b0APPA and cannot run TOPUP, and instead EDDY only with motion- and EC-correction
 			TRT=`mrinfo -property TotalReadoutTime dwi_den_unr.mif`
 			PEdir=`mrinfo -property PhaseEncodingDirection dwi_den_unr.mif`
+			# Finn L 2022-05-03: exclude -eddyqc_all eddy not work with upgrade. Should be possible to run eddy_quad afterwards 
 			dwifslpreproc -rpe_none -pe_dir $PEdir -readout_time $TRT \
 					-nocleanup \
 					-scratch $scratchdir \
 					-eddy_options " --slm=linear --repol --mporder=8 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 --mbs_niter=20 --mbs_ksp=10 --mbs_lambda=10 " \
-					-eddyqc_all eddy \
 					-nthreads $threads \
 					dwi_den_unr.mif \
 					dwi_den_unr_eddy.mif;
 					;;
 	esac;
 # Now cleanup by transferring relevant files to topup folder and deleting scratch folder
-    if [ -d eddy/quad ]; then 
+    if [ ! -d eddy ]; then mkdir eddy; fi # if we include "-eddyqc_all eddy" in dwifslpreproc call like above, then we create /eddy, else we do it now  
+	if [ -d eddy/quad ]; then 
 		mv eddy/quad ../../qc/. 
 	fi
     cp $scratchdir/command.txt $scratchdir/log.txt $scratchdir/eddy_*.txt $scratchdir/applytopup_*.txt $scratchdir/slspec.txt eddy/.
