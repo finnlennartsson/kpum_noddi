@@ -91,7 +91,7 @@ Codedir:        $codedir
 $BASH_SOURCE   	$command
 ----------------------------"
 
-logdir=$datadir/logs
+logdir=$datadir/../logs # the logs folder is located go one step below $datadir
 if [ ! -d $datadir ]; then mkdir -p $datadir; fi
 if [ ! -d $logdir ]; then mkdir -p $logdir; fi
 

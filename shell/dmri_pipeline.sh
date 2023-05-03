@@ -108,7 +108,7 @@ processfile=$process.sh
 # Run processfile
 echo "START - $process"
 starttime=$SECONDS
-bash $codedir/$processfile $sID $ssID $studydir -d $datadir;
+bash $codedir/$processfile $sID $ssID $studydir -s $studydir/nifti/sub-$sID/ses-$ssID/session_QC.tsv -d $datadir;
 endtime=$SECONDS
 echo "END - $process"
 # Print timing
