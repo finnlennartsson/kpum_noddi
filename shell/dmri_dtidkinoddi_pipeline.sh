@@ -13,7 +13,7 @@ Arguments:
   studydir                      Studydir with full path (e.g. \$PWD or /mnt/e/Finn/KPUM_NODDI/Data)
 Options:
   -derivatives <directory>      The base derivatives directory (default: \$studydir/derivatives/dMRI)
-  -tsv                          Subject tracker tsv-file (default: \$derivatives/Subject_Tracker_for_dmri_pipeline.tsv)
+  -tsv                          Subject tracker tsv-file (default: \$derivatives/Subject_Tracker_for_\$scriptname.tsv)
   -p / protocol                 MRI protocol used in study [ORIG/NEW] (default: ORIG) 
   -dPar                         Parallel diffusivity for the NODDI model (default: 0.0017)
   -t / -threads                 Number of CPU threads (default: 4) 
@@ -40,6 +40,7 @@ threads=4
 
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+scriptname=`basename $0 .sh`
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -56,7 +57,7 @@ while [ $# -gt 0 ]; do
 done
 
 # Defaults cont'd
-tsvfile=$derivatives/Subject_Tracker_for_dmri_pipeline.tsv
+tsvfile=$derivatives/Subject_Tracker_for_$scriptname.tsv
 
 # Set Variables
 datadir=$derivatives/sub-$sID/ses-$ssID
