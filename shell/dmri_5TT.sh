@@ -102,7 +102,7 @@ echo
 if [ ! -d $datadir/anat/orig ]; then mkdir -p $datadir/anat/orig; fi
 
 if [ ! -f $datadir/anat/orig/$tw2base.nii ]; then
-    mrconvert $t2w $datadir/anat/orig/$tw2base.nii
+    cp $t2w $datadir/anat/orig/$tw2base.nii
 fi
 
 #Then update to refer to filebase names (instead of path/file)
