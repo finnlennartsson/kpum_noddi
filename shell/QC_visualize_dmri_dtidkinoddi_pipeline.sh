@@ -154,12 +154,18 @@ cd $datadir/dwi/noddi
 dwibase=sub-${sID}_ses-${ssID}_dir-AP_desc-preproc-inorm_recon-NODDI-dPar
 echo "QC of generated NODDI maps (ICVF, ISOVF, OD)"
 for map in ICVF ISOVF OD; do
-	echo "Visualization of NODDI map $map"
+	echo "Visualization of NODDI map: $map"
 	mrview ${dwibase}-*_$map.nii -mode 2
 done
 echo
 
 cd $studydir
+
+#######################################
+
+
+#######################################
+# Registration 
 
 #######################################
 
