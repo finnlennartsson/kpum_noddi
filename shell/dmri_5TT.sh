@@ -102,11 +102,7 @@ echo
 if [ ! -d $datadir/anat/orig ]; then mkdir -p $datadir/anat/orig; fi
 
 if [ ! -f $datadir/anat/orig/$tw2base.nii ]; then
-    cp $t2w $datadir/anat/orig/$tw2base.nii
-fi
-
-if [ ! -f $datadir/anat/orig/$tw2base.json ] && [ -f $tw2origdir/$tw2base.json ]; then
-    cp $tw2origdir/$tw2base.json $datadir/anat/orig/$tw2base.json
+    mrconvert $t2w $datadir/anat/orig/$tw2base.nii
 fi
 
 #Then update to refer to filebase names (instead of path/file)
@@ -116,13 +112,13 @@ t2w=$tw2base
 				        
 ##################################################################################
 ## 1. Create brain mask
-cd $datadir/anat
+cd $datadir/anat/orig
 
 # Create brain mask
 if [ ! -f sub-${sID}_ses-${ssID}_space-T2w_mask.nii ]; then
-    bet $tw2base.nii tmp.nii -m -R -F
+    bet $tw2.nii tmp.nii -m -R -f 0.3
     mv tmp_mask.nii ../sub-${sID}_ses-${ssID}_space-T2w_mask.nii
-    rm tmp*nii*
+    #rm tmp*nii*
 fi
 cd $currdir
 
