@@ -64,9 +64,10 @@ datadir=$derivatives/sub-$sID/ses-$ssID
 
 # Get the code directory from which this script is executed (i.e. the /shell directory)
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+scriptname=`basename @0 .sh`
 
 echo
-echo "KPUM NODDI dMRI pipeline
+echo "KPUM NODDI dMRI tractography pipeline
 ----------------------------
 Subject:            $sID 
 Session:            $ssID
@@ -100,8 +101,6 @@ fi
 
 # Log the process with Check if subjecttrackertsv-file if not exists
 tsvprocesslist=""
-tsvprocesslistsubjectchecklist=""
-
 
 ######################################################################################################
 ## Process to perform - dmri_response
@@ -122,10 +121,8 @@ runtime_s=$(($endtime - $starttime));
 runtime_m=$(printf %.3f $(echo "$runtime_s/60" | bc -l));
 echo "Runtime was $runtime_m [min]"
 # update tsv-list
-tsvprocesslistupdated=`echo -e "$tsvprocesslist\t$process\t$process comments"` 
+tsvprocesslistupdated=`echo -e "$tsvprocesslist\t$process"` 
 tsvprocesslist=$tsvprocesslistupdated
-tsvprocesslistsubjectchecklistupdated=`echo -e "$tsvprocesslistsubjectchecklist\tDone\t"`
-tsvprocesslistsubjectchecklist=$tsvprocesslistsubjectchecklistupdated
 echo 
 ######################################################################################################
 
@@ -148,10 +145,8 @@ runtime_s=$(($endtime - $starttime));
 runtime_m=$(printf %.3f $(echo "$runtime_s/60" | bc -l));
 echo "Runtime was $runtime_m [min]"
 # update tsv-list
-tsvprocesslistupdated=`echo -e "$tsvprocesslist\t$process\t$process comments"` 
+tsvprocesslistupdated=`echo -e "$tsvprocesslist\t$process"` 
 tsvprocesslist=$tsvprocesslistupdated
-tsvprocesslistsubjectchecklistupdated=`echo -e "$tsvprocesslistsubjectchecklist\tDone\t"`
-tsvprocesslistsubjectchecklist=$tsvprocesslistsubjectchecklistupdated
 echo 
 ######################################################################################################
 
@@ -175,15 +170,16 @@ echo
 endTotal=$SECONDS
 runtime_s=$(($endTotal - $startTotal)); 
 runtime_m=$(printf %.3f $(echo "$runtime_s/60" | bc -l));
-echo "Finished - $0"
+echo "Finished - $scriptname.sh"
+echo "Included processes in $scriptname: $tsvprocesslist "
 echo "Runtime was $runtime_m [min]"
 echo 
 
 # Now update or create tsv-file 
 if [ ! -f $tsvfile ]; then 
   # we have to create $tsvfile
-  echo -e "participant_id\tsession_id$tsvprocesslist" > $derivatives/Subject_Tracker_for_dmri_pipeline.tsv
+  echo -e "participant_id\tsession_id\t$scriptname\tQC\tComments" > $derivatives/Subject_Tracker_for_$scriptname.tsv
 fi
 # update by adding 
 echo "Book keeping by adding a line at the bottom of $tsvfile"
-echo -e "sub-$sID\tses-${ssID}${tsvprocesslistsubjectchecklist}" >> $derivatives/Subject_Tracker_for_dmri_pipeline.tsv
+echo -e "sub-$sID\tses-${ssID}\tDone\tPending\t" >> $derivatives/Subject_Tracker_for_$scriptname.tsv
