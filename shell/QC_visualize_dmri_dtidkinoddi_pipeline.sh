@@ -78,24 +78,26 @@ echo
 
 #######################################
 # Preprocess
+echo "############## QC of Process: Preprocess
+"
 cd $datadir/dwi/preproc
 
 # MP PCA-denosing with dwidenoise
 echo QC of MP PCA-denosing with dwidenoise
-echo Check the residuals! Should not contain anatomical structure
+echo Check the residuals! Should not contain anatomical structure in brain parenchyma
 mrview denoise/dwi_den_residuals.mif -mode 2
 echo
 
 # Gibbs Ringing Artifacts removal with mrdegibbs
 echo QC of Gibbs Ringing Artifacts removal with mrdegibbs
-echo Check the residuals! Should not contain anatomical structure
+echo Check the residuals! Should not contain anatomical structure brain parenchyma
 mrview unring/dwi_den_unr_residuals.mif -mode 2
 echo
 
 #  EDDY (ORIG protocol) or TOPUP+EDDY (NEW protocol) 
 dwi=dwi_den_unr_eddy.mif 
 echo "QC of EDDY (ORIG protocol) or TOPUP+EDDY (NEW protocol)"
-echo Check corrected dMRI, shell by shell 
+echo "Check corrected dMRI, shell by shell, for residual motion, signal dropout, (excessive) image distortions"
 dMRI_visualisation $dwi;
 echo
 
@@ -109,7 +111,7 @@ echo
 
 # Final output (N4-biasfield corrected and B0-intensity normalised)
 cd $datadir/dwi
-dwibase=sub-037_ses-MR1_dir-AP_desc-preproc-inorm-brain
+dwibase=sub-${sID}_ses-${ssID}_dir-AP_desc-preproc-inorm-brain
 echo "QC of final preprocessing output (N4-biasfield corrected and B0-intensity normalised)"
 for bvalue in b0 b1000 b2000; do
 	echo "Visualization of skull-stripped mean$bvalue"
@@ -123,7 +125,8 @@ cd $studydir
 
 #######################################
 # DTI and DKI
-
+echo "############## QC of Process: DTI and DKI
+"
 cd $datadir/dwi/dti
 dwibase=sub-${sID}_ses-${ssID}_dir-AP_desc-preproc-inorm_dwi
 echo "QC of generated DTI maps (FA, MD, AD, RD, RGB, Trace)"
@@ -149,7 +152,8 @@ cd $studydir
 
 #######################################
 # NODDI
-
+echo "############## QC of Process: NODDI 
+"
 cd $datadir/dwi/noddi
 dwibase=sub-${sID}_ses-${ssID}_dir-AP_desc-preproc-inorm_recon-NODDI-dPar
 echo "QC of generated NODDI maps (ICVF, ISOVF, OD)"
