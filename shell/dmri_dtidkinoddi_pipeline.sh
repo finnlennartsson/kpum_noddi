@@ -67,7 +67,7 @@ codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 scriptname=`basename $0 .sh`
 
 echo
-echo "KPUM NODDI dMRI pipeline
+echo "KPUM NODDI dMRI DTI-DKI-NODDI pipeline
 ----------------------------
 Subject:       	$sID 
 Session:        $ssID
@@ -202,7 +202,7 @@ echo
 # Now update or create tsv-file 
 if [ ! -f $tsvfile ]; then 
   # we have to create $tsvfile
-  echo -e "participant_id\tsession_id\t$scriptname\tQC\tComments" > $derivatives/Subject_Tracker_for_$scriptname.tsv
+  echo -e "participant_id\tsession_id\t$scriptname\tQC\tcomments" > $derivatives/Subject_Tracker_for_$scriptname.tsv
 fi
 # update by adding 
 echo "Book keeping by adding a line at the bottom of $tsvfile"
