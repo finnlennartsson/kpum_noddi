@@ -5,8 +5,10 @@ usage()
 {
   base=$(basename "$0")
   echo "usage: $base sID ssID studydir [options]
-Runs the 5ttgen mcrib routine for generation of 5TT image from T2w
-Also generates/transforms M-CRIB parcellations into space-T2w
+1.  Runs the 5ttgen mcrib routine for generation of 5TT image from T2w
+    Also generates/transforms M-CRIB parcellations into space-T2w
+2.  Performs registration T2 <=> dwi
+    and maps T2, 5TT and M-CRIB parcellations into space-dwi
 
 Arguments:
     sID                         Subject ID (e.g. 001) 
@@ -122,15 +124,21 @@ if [ ! -f sub-${sID}_ses-${ssID}_space-T2w_mask.nii ]; then
 fi
 cd $currdir
 
+# refer t2wmask to this file
+t2wmask=sub-${sID}_ses-${ssID}_space-T2w_mask.nii
+
 ##################################################################################
 ## 2. N4-biasfield correct 
 cd $datadir/anat
 
 if [ ! -f sub-${sID}_ses-${ssID}_desc-restore_T2w.nii ]; then
     # N4 biasfield (ANTs)
-    N4BiasFieldCorrection -d 3 -i orig/$t2w.nii -x sub-${sID}_ses-${ssID}_space-T2w_mask.nii -o [sub-${sID}_ses-${ssID}_desc-restore_T2w.nii,sub-${sID}_ses-${ssID}_desc-biasfield_T2w.nii] -c [50x50x50,0.001] -s 2 -b [100,3] -t [0.15,0.01,200]
+    N4BiasFieldCorrection -d 3 -i orig/$t2w.nii -x $t2wmask -o [sub-${sID}_ses-${ssID}_desc-restore_T2w.nii,sub-${sID}_ses-${ssID}_desc-biasfield_T2w.nii] -c [50x50x50,0.001] -s 2 -b [100,3] -t [0.15,0.01,200]
 fi
 cd $currdir
+
+# update t2w to point to the N4BiasFieldCorrected T2w
+t2w=sub-${sID}_ses-${ssID}_desc-restore_T2w.nii
 
 ##################################################################################
 ## 3. Perform 5ttgen mcrib
@@ -154,13 +162,13 @@ if [ ! -f sub-${sID}_ses-${ssID}_5TT.nii ]; then
     export PATH="${mrtrix_5ttgen_neonatal_path}/bin:$PATH"
 
     5ttgen mcrib \
-	   -mask sub-${sID}_ses-${ssID}_space-T2w_mask.nii \
+	   -mask $t2wmask \
 	   -mcrib_path $MCRIBpath \
 	   -ants_parallel 0 -quick -nthreads $threads \
 	   -nocleanup -scratch $scratchdir \
 	   -sgm_amyg_hipp \
 	   -parcellation sub-${sID}_ses-${ssID}_desc-mcrib_dseg.nii \
-	   sub-${sID}_ses-${ssID}_desc-restore_T2w.nii t2w sub-${sID}_ses-${ssID}_5TT.nii
+	   $t2w t2w sub-${sID}_ses-${ssID}_5TT.nii
 
 #    5ttgen mcrib \
 #	   -mask sub-${sID}_ses-${ssID}_space-T2w_mask.nii \
@@ -178,10 +186,74 @@ if [ ! -f sub-${sID}_ses-${ssID}_5TT.nii ]; then
 
 fi
 
-
 cd $currdir
 
 #######################################################################################
+
+##################################################################################
+## 4. Registration 
+
+cd $datadir
+if [ ! -d xfm ]; then mkdir xfm; fi
+
+# define variables
+meanb1000_brain=sub-${sID}_ses-${ssID}_dir-AP_desc-preproc-inorm_meanb1000.nii
+meanb1000_brain_basename=`basename $meanb1000_brain .nii`
+t2w_brain=sub-${sID}_ses-${ssID}_desc-restore-brain_T2w.nii
+
+# First, 
+# We have in preprocess don brain extractions of meanb1000, but needs to be in .nii-format
+if [ ! -f dwi/$meanb1000_brain ]; then
+    mrconvert dwi/${meanb1000_brain_basename}.mif dwi/$meanb1000_brain
+fi
+# and construct skull-stripped t2w
+if [ ! -f anat/${t2w_brain} ]; then
+    mrcalc anat/$t2w anat/$t2wmask -mult anat/$t2w_brain
+fi
+
+# Registration using BBR
+if [ ! -f xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_flirt-bbr.mat ]; then 
+    echo "Rigid-body linear registration using FSL's FLIRT with BBR"
+    # First, make sure that we have a WM seg in /anat
+    wmseg=sub-${sID}_ses-${ssID}_5TTwm.nii
+    if [ ! -f anat/$wmseg ]; then
+        # Extract WM from 5TT image and save as 3D image
+	    mrconvert -coord 3 2 -axes 0,1,2 anat/sub-${sID}_ses-${ssID}_5TT.nii anat/$wmseg
+    fi
+    # Second, perform 2-step registration
+#    flirt -in dwi/$meanb1000_brain -ref anat/$t2w_brain -dof 6 -omat xfm/tmp.mat
+#    flirt -in dwi/$meanb1000_brain -ref anat/$t2w_brain -dof 6 -cost bbr -wmseg anat/$wmseg -init xfm/tmp.mat -omat xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_flirt-bbr.mat -schedule $FSLDIR/etc/flirtsch/bbr.sch
+    flirt -in dwi/$meanb1000_brain -ref anat/$t2w_brain -dof 6 -cost bbr -wmseg anat/$wmseg -omat xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_flirt-bbr.mat -schedule $FSLDIR/etc/flirtsch/bbr.sch
+    rm xfm/tmp.mat
+fi
+
+# Transform FLIRT registration matrix into MRtrix format
+if [ ! -f xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_mrtrix-bbr.mat ];then
+     transformconvert xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_flirt-bbr.mat dwi/$meanb1000_brain anat/$t2w_brain flirt_import xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_mrtrix-bbr.mat
+fi
+
+cd $currdir
+
+##################################################################################
+
+####################################################################################################
+## 5. Transformations of T2, 5TT, allLabels-file into dMRI space by updating image headers (no resampling!)
+
+cd $datadir
+
+# Define variables
+t2w_dwispace=sub-${sID}_ses-${ssID}_desc-restore-brain_space-dwi_T2w.nii
+t2w_dwispace_basename=`basename $t2w_dwispace .nii`
+
+# T2
+if [ ! -f anat/$t2w_dwispace ]; then
+    mrtransform anat/$t2w -linear xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_mrtrix-bbr.mat anat/$t2w_dwispace -inverse
+    mrconvert anat/$t2w_dwispace dwi/$t2w_dwispace_basename.mif
+fi
+
+cd $currdir
+####################################################################################################
+
 
 end=`date +%s`
 runtime=$((end-start))
