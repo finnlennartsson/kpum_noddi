@@ -156,11 +156,20 @@ if [ ! -f sub-${sID}_ses-${ssID}_5TT.nii ]; then
     5ttgen mcrib \
 	   -mask sub-${sID}_ses-${ssID}_space-T2w_mask.nii \
 	   -mcrib_path $MCRIBpath \
-	   -ants_parallel 2 -nthreads $threads \
+	   -ants_parallel 0 -quick -nthreads $threads \
 	   -nocleanup -scratch $scratchdir \
 	   -sgm_amyg_hipp \
 	   -parcellation sub-${sID}_ses-${ssID}_desc-mcrib_dseg.nii \
 	   sub-${sID}_ses-${ssID}_desc-restore_T2w.nii t2w sub-${sID}_ses-${ssID}_5TT.nii
+
+#    5ttgen mcrib \
+#	   -mask sub-${sID}_ses-${ssID}_space-T2w_mask.nii \
+#	   -mcrib_path $MCRIBpath \
+#	   -ants_parallel 2 -nthreads $threads \
+#	   -nocleanup -scratch $scratchdir \
+#	   -sgm_amyg_hipp \
+#	   -parcellation sub-${sID}_ses-${ssID}_desc-mcrib_dseg.nii \
+#	   sub-${sID}_ses-${ssID}_desc-restore_T2w.nii t2w sub-${sID}_ses-${ssID}_5TT.nii
     # clean up
     # rm -rf $scratchdir
 
