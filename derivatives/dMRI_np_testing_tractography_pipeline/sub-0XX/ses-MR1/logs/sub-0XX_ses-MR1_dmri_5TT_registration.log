@@ -1,3 +1,6 @@
+On Tue May 23 09:14:44 JST 2023, executing: /mnt/d/KPUM_NODDI/Data/code/kpum_noddi/shell/dmri_5TT_registration.sh 0XX MR1 /mnt/d/KPUM_NODDI/Data/code/kpum_noddi -d /mnt/d/KPUM_NODDI/Data/code/kpum_noddi/derivatives/dMRI_np_testing_tractography_pipeline/sub-0XX/ses-MR1
+
+Printout dmri_5TT_registration.sh
 #!/bin/bash
 # KPUM NODDI
 #
@@ -220,21 +223,16 @@ if [ ! -f xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_flirt-bbr.mat ]; then
         # Extract WM from 5TT image and save as 3D image
 	    mrconvert -coord 3 2 -axes 0,1,2 anat/sub-${sID}_ses-${ssID}_5TT.nii anat/$wmseg
     fi
-
-#    # Second, perform 2-step registration
-#    flirt -in dwi/$meanb1000_brain -ref anat/$t2w_brain -dof 6 -omat xfm/tmp.mat
-#    flirt -in dwi/$meanb1000_brain -ref anat/$t2w_brain -dof 6 -cost bbr -wmseg anat/$wmseg -init xfm/tmp.mat -omat xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_flirt-bbr.mat -schedule $FSLDIR/etc/flirtsch/bbr.sch
-#    rm xfm/tmp.mat
-
-    # Currently, NOT working with BBR, so do only rigid-body 6 DOF (i.e. initialisation step)
-    flirt -in dwi/$meanb1000_brain -ref anat/$t2w_brain -dof 6 -omat xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_flirt-rigid-6dof.mat
-
-
+    # Second, perform 2-step registration
+    flirt -in dwi/$meanb1000_brain -ref anat/$t2w_brain -dof 6 -omat xfm/tmp.mat
+    flirt -in dwi/$meanb1000_brain -ref anat/$t2w_brain -dof 6 -cost bbr -wmseg anat/$wmseg -init xfm/tmp.mat -omat xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_flirt-bbr.mat -schedule $FSLDIR/etc/flirtsch/bbr.sch
+#    flirt -in dwi/$meanb1000_brain -ref anat/$t2w_brain -dof 6 -cost bbr -wmseg anat/$wmseg -omat xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_flirt-bbr.mat -schedule $FSLDIR/etc/flirtsch/bbr.sch
+    rm xfm/tmp.mat
 fi
 
 # Transform FLIRT registration matrix into MRtrix format
-if [ ! -f xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_mrtrix-rigid-6dof.mat ];then
-     transformconvert xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_flirt-rigid-6dof.mat dwi/$meanb1000_brain anat/$t2w_brain flirt_import xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_mrtrix-rigid-6dof.mat
+if [ ! -f xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_mrtrix-bbr.mat ];then
+     transformconvert xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_flirt-bbr.mat dwi/$meanb1000_brain anat/$t2w_brain flirt_import xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_mrtrix-bbr.mat
 fi
 
 cd $currdir
@@ -252,27 +250,8 @@ t2w_dwispace_basename=`basename $t2w_dwispace .nii`
 
 # T2
 if [ ! -f anat/$t2w_dwispace ]; then
-    mrtransform anat/$t2w -linear xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_mrtrix-rigid-6dof.mat anat/$t2w_dwispace -inverse
+    mrtransform anat/$t2w -linear xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_mrtrix-bbr.mat anat/$t2w_dwispace -inverse
     mrconvert anat/$t2w_dwispace dwi/$t2w_dwispace_basename.mif
-fi
-
-# Take care of 5TT
-actdir=dwi/5TT
-if [ ! -d $actdir ]; then mkdir -p $actdir; fi
-if [ ! -f  $actdir/sub-${sID}_ses-${ssID}_space-dwi_5TT.mif ]; then
-    mrtransform -inverse -linear xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_mrtrix-rigid-6dof.mat anat/sub-${sID}_ses-${ssID}_5TT.nii $actdir/sub-${sID}_ses-${ssID}_space-dwi_5TT.mif
-fi
-if [ ! -f  $actdir/sub-${sID}_ses-${ssID}_space-dwi_5TTvis.mif ]; then
-    5tt2vis $actdir/sub-${sID}_ses-${ssID}_space-dwi_5TT.mif $actdir/sub-${sID}_ses-${ssID}_space-dwi_5TTvis.mif
-fi
-
-
-# Take care of all_labels
-labeldir=dwi/parcellation/M-CRIB
-if [ ! -d $labeldir ]; then mkdir -p $labeldir; fi
-
-if [ ! -f $labeldir/${allLabel}_space-dwi.mif ]; then
-    mrtransform  -inverse -linear xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_mrtrix-rigid-6dof.mat anat/sub-${sID}_ses-${ssID}_desc-mcrib_dseg.nii $labeldir/sub-${sID}_ses-${ssID}_desc-mcrib_space-dwi_dseg.mif
 fi
 
 cd $currdir
