@@ -1,1 +1,0 @@
-/home/finn/Software/mrtrix_5ttgen_neonatal/bin/5ttgen mcrib -mask sub-0XX_ses-MR1_space-T2w_mask.nii -mcrib_path /mnt/d/KPUM_NODDI/Data/code/kpum_noddi/atlases/M-CRIB -ants_parallel 0 -quick -nthreads 10 -nocleanup -scratch 5ttgen_mcrib -sgm_amyg_hipp -parcellation sub-0XX_ses-MR1_desc-mcrib_dseg.nii sub-0XX_ses-MR1_desc-restore_T2w.nii t2w sub-0XX_ses-MR1_5TT.nii
