@@ -15,8 +15,9 @@ Options:
   -derivatives <directory>      The base derivatives directory (default: \$studydir/derivatives/dMRI)
   -tsv                          Subject tracker tsv-file (default: \$derivatives/Subject_Tracker_for_\$scriptname.tsv)
   -nbr                          Number of streamlines in whole-brain tractogram (default: 10M)
-  -p / protocol                 MRI protocol used in study [ORIG/NEW] (default: NEW) 
-  -t / -threads                 Number of CPU threads (default: 4) 
+  -a / -atlas                   Atlas used for parcellation (options ALBERT or MCRIB) (default: M-CRIB)
+  -p / -protocol                 MRI protocol used in study [ORIG/NEW] (default: NEW) 
+  -t / -threads                 Number of CPU threads (default: 10) 
   -h / -help / --help           Print usage.
 "
   exit;
@@ -36,7 +37,8 @@ currdir=$PWD
 protocol=NEW
 derivatives=$studydir/derivatives/dMRI
 nbr=10M
-threads=4
+threads=10
+atlas=M-CRIB
 
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -45,6 +47,7 @@ scriptname=`basename $0 .sh`
 while [ $# -gt 0 ]; do
     case "$1" in
     -tsv)  shift; tsvfile=$1; ;;
+    -a|-atlas)  shift; atlas=$1; ;;
     -p|-protocol)  shift; protocol=$1; ;;
     -derivatives)  shift; derivatives=$1; ;;
     -dPar)  shift; dPar=$1; ;;
@@ -106,7 +109,7 @@ tsvprocesslist=""
 ## Process to perform - dmri_response
 process=dmri_response
 processfile=$process.sh
-# input to process
+# input to process (see also arguments/options to script)
 dwi=$datadir/dwi/sub-${sID}_ses-${ssID}_dir-AP_desc-preproc-inorm_dwi.mif
 mask=$datadir/dwi/sub-${sID}_ses-${ssID}_space-dwi_mask.mif
 response=dhollander
@@ -130,7 +133,7 @@ echo
 ## Process to perform - dmri_csd
 process=dmri_csd
 processfile=$process.sh
-# input to process
+# input to process (see also arguments/options to script)
 dwi=$datadir/dwi/sub-${sID}_ses-${ssID}_dir-AP_desc-preproc-inorm_dwi.mif
 mask=$datadir/dwi/sub-${sID}_ses-${ssID}_space-dwi_mask.mif
 response=dhollander
@@ -152,17 +155,58 @@ echo
 
 ######################################################################################################
 ## Process to perform - dmri_5TT_and_registration
-#
+# IS RUN WITHIN REGISTRATION STEP (i.e. before tractography pipeline)
 ######################################################################################################
 
 ######################################################################################################
 ## Process to perform - dmri_tractography
 #
+process=dmri_tractography
+processfile=$process.sh
+# input to process (see also arguments/options to script)
+csd=$datadir/dwi/csd/csd_dhollander_sub-${sID}_ses-${ssID}_dir-AP_desc-preproc-inorm_dwi_wm_2tt.mif
+act5tt=$datadir/dwi/5TT/sub-${sID}_ses-${ssID}_space-dwi_mask.mif
+# Run processfile
+echo "START - $process"
+starttime=$SECONDS
+bash $codedir/$processfile $sID $ssID $studydir -d $datadir -csd $csd -5TT $act5tt -nbr $nbr -threads $threads;
+endtime=$SECONDS
+echo "END - $process"
+# Print timing
+runtime_s=$(($endtime - $starttime)); 
+runtime_m=$(printf %.3f $(echo "$runtime_s/60" | bc -l));
+echo "Runtime was $runtime_m [min]"
+# update tsv-list
+tsvprocesslistupdated=`echo -e "$tsvprocesslist\t$process"` 
+tsvprocesslist=$tsvprocesslistupdated
+echo 
 ######################################################################################################
 
 ######################################################################################################
 ## Process to perform - dmri_connectome
 #
+process=dmri_connectome
+processfile=$process.sh
+# input to process (see also arguments/options to script)
+tract=$datadir/dwi/tractography/whole_brain_10M_sift.tck
+label=$datadir/dwi/parcellation/$atlas/sub-${sID}_ses-${ssID}_desc-mcrib_space-dwi_dseg.mif
+lutin=$codedir/../label_names/$atlas/M-CRIB_labels_FreeSurfer_format.txt
+lutout=$codedir/../label_names/$atlas/Structural_Labels.txt
+connectome=Structural_M-CRIB
+# Run processfile
+echo "START - $process"
+starttime=$SECONDS
+bash $codedir/$processfile $sID $ssID $studydir -d $datadir -csd $csd -5TT $act5tt -nbr $nbr -threads $threads;
+endtime=$SECONDS
+echo "END - $process"
+# Print timing
+runtime_s=$(($endtime - $starttime)); 
+runtime_m=$(printf %.3f $(echo "$runtime_s/60" | bc -l));
+echo "Runtime was $runtime_m [min]"
+# update tsv-list
+tsvprocesslistupdated=`echo -e "$tsvprocesslist\t$process"` 
+tsvprocesslist=$tsvprocesslistupdated
+echo 
 ######################################################################################################
 
 ######################################################################################################

@@ -15,7 +15,9 @@ Arguments:
     ssID                        Session ID (e.g. MR2)
     studydir                    Studydir with full path (e.g. \$PWD or /mnt/e/Finn/KPUM_NODDI/Data)
 Options:
-    -t2w                        T2 image (default: \$datadir/anat/orig/sub-sID_ses-ssID_acq-mcrib_T2w.nii)
+    -t2w                        T2w image (default: \$datadir/anat/orig/sub-sID_ses-ssID_acq-mcrib_T2w.nii)
+    -a / -atlas			Atlas used for parcellation (options ALBERT or MCRIB) (default: M-CRIB)
+    -p / protocol                 MRI protocol used in study [ORIG/NEW] (default: ORIG) 
     -threads                    Number of CPUs to use (default: 10)
     -d / -data-dir  <directory> The directory used to output the preprocessed files (default: \$studydir/derivatives/dMRI/sub-sID/ses-ssID)
     -h / -help / --help         Print usage.
@@ -48,6 +50,8 @@ currdir=$PWD
 datadir=$studydir/derivatives/dMRI/sub-$sID/ses-$ssID
 t2w="";  # See below - Defaults cont'd
 threads=10
+atlas="M-CRIB"
+protocpl='NEW'
 
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -56,6 +60,8 @@ while [ $# -gt 0 ]; do
     case "$1" in
 	-t2w) shift; t2w=$1; ;;
 	-threads) shift; threads=$1; ;;
+	-a|-atlas)  shift; atlas=$1; ;;
+	-p|-protocol)  shift; protocol=$1; ;;
 	-d|-data-dir)  shift; datadir=$1; ;;
 	-h|-help|--help) usage; ;;
 	-*) echo "$0: Unrecognized option $1" >&2; usage; ;;

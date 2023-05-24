@@ -99,8 +99,8 @@ for file in $csd $act5tt; do
     origdir=`dirname $file`
     filebase=`basename $file .mif`
     
-    if [[ $file = $csd ]];then outdir=$datadir/csd;fi
-    if [[ $file = $act5tt ]];then outdir=$datadir/5TT;fi
+    if [[ $file = $csd ]];then outdir=$datadir/dwi/csd;fi
+    if [[ $file = $act5tt ]];then outdir=$datadir/dwi/5TT;fi
     if [ ! -d $outdir ]; then mkdir -p $outdir; fi
     
     if [ ! -f $outdir/$filebase.mif ];then
@@ -118,7 +118,7 @@ act5tt=`basename $act5tt .mif`
 ##################################################################################
 # 1. Perform whole-brain tractography
 
-cd $datadir
+cd $datadir/dwi
 
 # define output tractdir
 tractdir=tractography
