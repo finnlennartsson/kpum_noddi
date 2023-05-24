@@ -153,19 +153,19 @@ cd $datadir/anat
 MCRIBpath=$studydir/atlases/M-CRIB
 scratchdir=5ttgen_mcrib
 
-mrtrix_path=$HOME/Software/mrtrix3
-mrtrix_5ttgen_mcrib_path=$HOME/Software/mrtrix_5ttgen_neonatal
-export PATH="${mrtrix_5ttgen_mcrib_path}/bin:$PATH"
-
 # Run 5ttgen mcrib
 # NOTE - built from Manuel Blesa's github repo https://github.com/mblesac/mrtrix3/tree/5ttgen_neonatal_rs
 
 if [ ! -f sub-${sID}_ses-${ssID}_5TT.nii ]; then
 
-    # Put mrtrix3_5ttgen_neonatal first in $PATH
-    mrtrix_path=$HOME/Software/mrtrix3
-    mrtrix_5ttgen_neonatal_path=$HOME/Software/mrtrix_5ttgen_neonatal
-    export PATH="${mrtrix_5ttgen_neonatal_path}/bin:$PATH"
+    # Put bin of mrtrix3_5ttgen_neonatal first in $PATH
+    # mrtrix3_5ttgen_neonatal is installed in the same software location as mrtrix3
+    # so just need to get the bin of this and then change the name
+    # basefolder for installation of Manuel Blesa's mrtrix3 version with 5ttgen mcrib
+    tmpbin=`which mrconvert`
+    mrtrix3_bin=`dirname $tmpbin`
+    mrtrix3_5ttgenmcrib_bin=`echo $mrtrix3_bin | sed 's/mrtrix3/mrtrix3\_5ttgen\_neonatal/g'`
+    export PATH="$mrtrix3_5ttgenmcrib_bin:$PATH"
 
     5ttgen mcrib \
 	   -mask $t2wmask \
