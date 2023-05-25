@@ -166,6 +166,7 @@ if [ ! -f sub-${sID}_ses-${ssID}_5TT.nii ]; then
     mrtrix3_bin=`dirname $tmpbin`
     mrtrix3_5ttgenmcrib_bin=`echo $mrtrix3_bin | sed 's/mrtrix3/mrtrix3\_5ttgen\_neonatal/g'`
     export PATH="$mrtrix3_5ttgenmcrib_bin:$PATH"
+    echo $PATH
 
     5ttgen mcrib \
 	   -mask $t2wmask \
@@ -277,7 +278,7 @@ fi
 labeldir=dwi/parcellation/M-CRIB
 if [ ! -d $labeldir ]; then mkdir -p $labeldir; fi
 
-if [ ! -f $labeldir/${allLabel}_space-dwi.mif ]; then
+if [ ! -f $labeldir/sub-${sID}_ses-${ssID}_desc-mcrib_space-dwi_dseg.mif ]; then
     mrtransform  -inverse -linear xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_mrtrix-rigid-6dof.mat anat/sub-${sID}_ses-${ssID}_desc-mcrib_dseg.nii $labeldir/sub-${sID}_ses-${ssID}_desc-mcrib_space-dwi_dseg.mif
 fi
 
