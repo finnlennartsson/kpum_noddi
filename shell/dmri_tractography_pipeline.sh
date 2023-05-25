@@ -47,6 +47,7 @@ scriptname=`basename $0 .sh`
 while [ $# -gt 0 ]; do
     case "$1" in
     -tsv)  shift; tsvfile=$1; ;;
+    -nbr)  shift; nbr=$1; ;;
     -a|-atlas)  shift; atlas=$1; ;;
     -p|-protocol)  shift; protocol=$1; ;;
     -derivatives)  shift; derivatives=$1; ;;
