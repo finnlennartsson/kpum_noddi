@@ -197,7 +197,7 @@ connectome=Structural_M-CRIB
 # Run processfile
 echo "START - $process"
 starttime=$SECONDS
-bash $codedir/$processfile $sID $ssID $studydir -d $datadir -csd $csd -5TT $act5tt -nbr $nbr -threads $threads;
+bash $codedir/$processfile $sID $ssID $studydir -d $datadir -tract $tract -5TT $act5tt -nbr $nbr -threads $threads;
 endtime=$SECONDS
 echo "END - $process"
 # Print timing
