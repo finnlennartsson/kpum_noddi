@@ -42,13 +42,15 @@ Run scripts in the following order
 4. Run script `dmri_noddi.sh`
 
 ## Running wrapper script
-Run script `dmri_pipeline.sh`  
+Run script `dmri_dtidkinoddi_pipeline.sh`  
 E.g. using these input variables
 ```sh
-codedir=/home/finn/Code/kpum_noddi/shell
-bash    $codedir/dmri_pipeline.sh \
-        035 MR1 /mnt/s/Research/Projects/KPUM_NODDI/Data \
-        -derivatives /mnt/s/Research/Projects/KPUM_NODDI/Data/derivatives/dMRI_Testing7_dmri_pipeline \
+studydir=/mnt/d/KPUM_NODDI/Data
+derivatives=$studydir/derivatives/dMRI_Testing7_dmri_pipeline
+codedir=$studydir/code/kpum_noddi/shell
+bash    $codedir/dmri_dtidkinoddi_pipeline.sh \
+        035 MR1  \
+        -derivatives $derivatives \
         -protocol ORIG
 ```
 
