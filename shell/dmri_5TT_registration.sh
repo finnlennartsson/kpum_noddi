@@ -51,7 +51,7 @@ datadir=$studydir/derivatives/dMRI/sub-$sID/ses-$ssID
 t2w="";  # See below - Defaults cont'd
 threads=10
 atlas="M-CRIB"
-protocpl='NEW'
+protocol='NEW'
 
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -83,6 +83,8 @@ Subject:       	$sID
 Session:        $ssID
 Studydir:       $studydir
 T2w:            $t2w
+Atlas:		$atlas
+Protocol:	$protocol
 Directory:     	$datadir 
 Threads:        $threads
 
