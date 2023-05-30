@@ -71,7 +71,7 @@ while [ $# -gt 0 ]; do
 done
 
 # Defaults cont'd
-if [ $t2w=="" ]; then
+if [ $t2w == "" ]; then
     t2w=$datadir/anat/orig/sub-${sID}_ses-${ssID}_acq-mcrib_T2w.nii
 fi
 
