@@ -71,7 +71,7 @@ while [ $# -gt 0 ]; do
 done
 
 # Defaults cont'd
-if [ $t2w == "" ]; then
+if [[ $t2w == "" ]]; then
     t2w=$datadir/anat/orig/sub-${sID}_ses-${ssID}_acq-mcrib_T2w.nii
 fi
 
@@ -153,7 +153,9 @@ t2w=sub-${sID}_ses-${ssID}_desc-restore_T2w.nii
 cd $datadir/anat
 
 MCRIBpath=$studydir/atlases/M-CRIB
-scratchdir=5ttgen_mcrib
+
+#scratchdir=5ttgen_mcrib
+scratchdir=$HOME/5ttgen_mcrib
 
 # Run 5ttgen mcrib
 # NOTE - built from Manuel Blesa's github repo https://github.com/mblesac/mrtrix3/tree/5ttgen_neonatal_rs
@@ -170,23 +172,23 @@ if [ ! -f sub-${sID}_ses-${ssID}_5TT.nii ]; then
     export PATH="$mrtrix3_5ttgenmcrib_bin:$PATH"
     echo $PATH
 
-    5ttgen mcrib \
-	   -mask $t2wmask \
-	   -mcrib_path $MCRIBpath \
-	   -ants_parallel 0 -quick -nthreads $threads \
-	   -nocleanup -scratch $scratchdir \
-	   -sgm_amyg_hipp \
-	   -parcellation sub-${sID}_ses-${ssID}_desc-mcrib_dseg.nii \
-	   $t2w t2w sub-${sID}_ses-${ssID}_5TT.nii
-
 #    5ttgen mcrib \
-#	   -mask sub-${sID}_ses-${ssID}_space-T2w_mask.nii \
+#	   -mask $t2wmask \
 #	   -mcrib_path $MCRIBpath \
-#	   -ants_parallel 2 -nthreads $threads \
+#	   -ants_parallel 0 -quick -nthreads $threads \
 #	   -nocleanup -scratch $scratchdir \
 #	   -sgm_amyg_hipp \
 #	   -parcellation sub-${sID}_ses-${ssID}_desc-mcrib_dseg.nii \
-#	   sub-${sID}_ses-${ssID}_desc-restore_T2w.nii t2w sub-${sID}_ses-${ssID}_5TT.nii
+#	   $t2w t2w sub-${sID}_ses-${ssID}_5TT.nii
+
+    5ttgen mcrib \
+	   -mask sub-${sID}_ses-${ssID}_space-T2w_mask.nii \
+	   -mcrib_path $MCRIBpath \
+	   -ants_parallel 2 -nthreads $threads \
+	   -nocleanup -scratch $scratchdir \
+	   -sgm_amyg_hipp \
+	   -parcellation sub-${sID}_ses-${ssID}_desc-mcrib_dseg.nii \
+	   sub-${sID}_ses-${ssID}_desc-restore_T2w.nii t2w sub-${sID}_ses-${ssID}_5TT.nii
     # clean up
     # rm -rf $scratchdir
 
