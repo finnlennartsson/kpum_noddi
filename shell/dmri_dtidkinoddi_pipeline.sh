@@ -206,4 +206,4 @@ if [ ! -f $tsvfile ]; then
 fi
 # update by adding 
 echo "Book keeping by adding a line at the bottom of $tsvfile"
-echo -e "sub-$sID\tses-${ssID}\tDone\tPending\t" >> $derivatives/Subject_Tracker_for_$scriptname.tsv
+#echo -e "sub-$sID\tses-${ssID}\tDone\tPending\t" >> $derivatives/Subject_Tracker_for_$scriptname.tsv
