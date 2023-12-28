@@ -76,8 +76,8 @@ if [ ! -f $sessionfile ]; then sessionfile="No_sessionfile"; fi
 
 echo "dMRI preprocessing
 ----------------------------
-Subject:       	$sID 
-Session:        $ssID
+Subject:		$sID 
+Session:		$ssID
 Studydir:		$studydir
 Session file:	$sessionfile
 DWI (AP):		$dwi
@@ -309,18 +309,21 @@ cd $datadir/dwi/preproc
 
 scratchdir=dwifslpreproc
 
-if [ ! -f dwi_den_unr_eddy.mif ];then
+if [ ! -f $scratchdir/dwi_post_eddy.eddy_cnr_maps.nii.gz ];then
+#if [ ! -f dwi_den_unr_eddy.mif ];then
 
 	case $protocol in
 		NEW) # We have NEW protocol and can use all our b0s
 			echo "We have NEW protocol"    
 			# Finn L 2022-05-03: exclude "-eddyqc_all eddy" in dwifslpreproc call as eddy_quad is not working properly after upgrade. 
 			# Have updated eddy_quad as suggested ($FSLDIR/bin/update_fsl_package -u fsl-eddy_qc), but not yet tested it. Should be possible to run eddy_quad afterwards 
+			# Finn L 2023-12-28: Problem that in eddy_quad that it cannot deal with .nii files, only with .nii.gz files. Make a workaround and run eddy_quad separately
 			dwifslpreproc -se_epi topup/b0APPA.mif -rpe_header -align_seepi \
+					-force  \
 					-nocleanup \
 					-scratch $scratchdir \
 					-topup_options " --iout=field_mag_unwarped" \
-					-eddy_options " --slm=linear --repol --mporder=8 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 --estimate_move_by_susceptibility --mbs_niter=20 --mbs_ksp=10 --mbs_lambda=10 " \
+					-eddy_options " --cnr_maps --slm=linear --repol --mporder=8 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 --estimate_move_by_susceptibility --mbs_niter=20 --mbs_ksp=10 --mbs_lambda=10 " \
 					-nthreads $threads \
 					dwi_den_unr.mif \
 					dwi_den_unr_eddy.mif;
@@ -330,23 +333,43 @@ if [ ! -f dwi_den_unr_eddy.mif ];then
 			PEdir=`mrinfo -property PhaseEncodingDirection dwi_den_unr.mif`
 			# Finn L 2022-05-03: exclude "-eddyqc_all eddy" in dwifslpreproc call as eddy_quad is not working properly after upgrade. 
 			# Have updated eddy_quad as suggested ($FSLDIR/bin/update_fsl_package -u fsl-eddy_qc), but not yet tested it. Should be possible to run eddy_quad afterwards 
+			# Finn L 2023-12-28: Problem that in eddy_quad that it cannot deal with .nii files, only with .nii.gz files. Make a workaround and run eddy_quad separately
 			dwifslpreproc -rpe_none -pe_dir $PEdir -readout_time $TRT \
+					-force \
 					-nocleanup \
 					-scratch $scratchdir \
-					-eddy_options " --slm=linear --repol --mporder=8 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 --mbs_niter=20 --mbs_ksp=10 --mbs_lambda=10 " \
+					-eddy_options " --cnr_maps  --slm=linear --repol --mporder=8 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 --mbs_niter=20 --mbs_ksp=10 --mbs_lambda=10 " \
 					-nthreads $threads \
 					dwi_den_unr.mif \
 					dwi_den_unr_eddy.mif;
 					;;
 	esac;
-# Now cleanup by transferring relevant files to topup folder and deleting scratch folder
-    if [ ! -d eddy ]; then mkdir eddy; fi # if we include "-eddyqc_all eddy" in dwifslpreproc call like above, then we create /eddy, else we do it now  
-	if [ -d eddy/quad ]; then 
+
+	###################################################
+	## Run eddy_quad 
+	if [ ! -d eddy ]; then mkdir eddy; fi # if we include "-eddyqc_all eddy" in dwifslpreproc call like above, then we create /eddy, else we do it now  
+	# First, zip all .nii files in $scratchdir
+	for file in $scratchdir/*.nii; do gzip $file; done
+	# change FSLOUTPUTTYPE to NIFTI_GZ
+	export FSLOUTPUTTYPE=NIFTI_GZ
+	# then run eddy_quad and put output in eddy/quad
+ 	eddy_quad 	$scratchdir/dwi_post_eddy \
+				-idx $scratchdir/eddy_indices.txt -par $scratchdir/eddy_config.txt \
+				-m $scratchdir/eddy_mask.nii.gz \
+				-b $scratchdir/bvals -s $scratchdir/slspec.txt \
+				-o eddy/quad
+ 	# change back FSLOUTPUTTYPE=NIFTI
+	export FSLOUTPUTTYPE=NIFTI
+	###################################################
+	
+	## Now cleanup by transferring relevant files to topup folder 
+    if [ -d eddy/quad ]; then 
 		mv eddy/quad ../../qc/. 
 	fi
     cp $scratchdir/command.txt $scratchdir/log.txt $scratchdir/eddy_*.txt $scratchdir/applytopup_*.txt $scratchdir/slspec.txt eddy/.
-    mv $scratchdir/field_* $scratchdir/topup_* topup/.
-    rm -rf $scratchdir;
+    cp $scratchdir/field_* $scratchdir/topup_* topup/.
+	# and deleting scratch folder
+    #rm -rf $scratchdir;
 fi
 
 cd $currdir
