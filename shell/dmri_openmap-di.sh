@@ -15,10 +15,12 @@ Arguments:
   studydir              Studydir with full path (e.g. \$PWD or /mnt/e/Finn/KPUM_NODDI/Data)
 
 Options:
-  -d / -datadir              Derivatives folder (default: \$studydir/derivatives/dMRI/sub-sID/ses-ssID/dwi)
+  -d / -datadir         Derivatives folder (default: \$studydir/derivatives/dMRI/sub-sID/ses-ssID/dwi)
   -dwi                  Preprocessed and intensity normalised dMRI in .mif format (default: \$datadir/sub-sID_ses-ssID_dir-AP_desc-preproc-inorm_dwi.mif)
   -mask                 Brain mask in .mif format (default: \$derivatives/\$subjectdata/sub-sID_ses-ssID_space-dwi_mask.mif)
-  -t / -threads          Number of threads for MRtrix commands (default: 4)
+  -openmap_path         Path to OpenMap-Di installation (default: $HOME/Software/OpenMAP-Di)  
+  -device               Device for OpenMAP-Di (defalt: cpu)
+  -t / -threads         Number of threads for MRtrix commands (default: 4)
   -h / -help / --help   Print usage.
 "
   exit;
@@ -38,6 +40,8 @@ currdir=$PWD
 # Defaults
 datadir=$studydir/derivatives/dMRI/sub-$sID/ses-$ssID/dwi
 dwi=""; mask=""  # See below - Defaults cont'd
+openmap_path=$HOME/Software/OpenMAP-Di
+device=cpu
 threads=4
 
 # check whether the different tools are set and load parameters
@@ -47,6 +51,8 @@ while [ $# -gt 0 ]; do
     case "$1" in
 	  -dwi) shift; dwi=$1; ;;
 	  -mask) shift; mask=$1; ;;
+    -openmap_path) shift; openmap_path=$1; ;;
+    -device) shift; device=1; ;;
 	  -t|-threads) shift; threads=$1; ;;
 	  -d|-datadir)  shift; datadir=$1; ;;
 	  -h|-help|--help) usage; ;;
@@ -75,7 +81,8 @@ Session:        $ssID
 Studydir:       $studydir
 Datadir:        $datadir
 DWI (AP):       $dwi
-Mask:           $mask     
+Mask:           $mask   
+Device:         $device  
 Threads:        $threads
  
 Codedir:        $codedir
@@ -119,6 +126,6 @@ done
 ##################################################################################
 # 2. Run OpenMap-Di on subject
 
-#python ~/Software/OpenMAP-Di/parcellate_neonatal_brain.py  -i ../OpenMAP-Di -o ../OpenMAP-Di -m ~/Software/OpenMAP-Di/nnUNetTrainerNoMirroring__nnUNetPlans__3d_fullres -device cpu
+python $openmap_path/parcellate_neonatal_brain.py  -i $openmap_folder -o $openmap_folder -m $openmap_path/nnUNetTrainerNoMirroring__nnUNetPlans__3d_fullres -device $device
 
 
