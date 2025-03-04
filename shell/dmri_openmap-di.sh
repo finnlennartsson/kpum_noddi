@@ -125,7 +125,7 @@ done
 
 ##################################################################################
 # 2. Run OpenMap-Di on subject
-
+conda activate OpenMAP-Di
 python $openmap_path/parcellate_neonatal_brain.py  -i $openmap_folder -o $openmap_folder -m $openmap_path/nnUNetTrainerNoMirroring__nnUNetPlans__3d_fullres -device $device
 
 
