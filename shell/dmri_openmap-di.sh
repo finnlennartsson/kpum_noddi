@@ -126,9 +126,11 @@ done
 ##################################################################################
 # 2. Run OpenMap-Di on subject
 
-# we need to activate the correct conda environment
-condapath=$(dirname $(dirname $(which conda)))/etc/profile.d/conda.sh
-source $condapath
-conda activate OpenMAP-Di
+# we need to activate the correct conda environment (only important if OpenMAP-Di dependencies/requirements is not installed within the conda environment)
+#condapath=$(dirname $(dirname $(which conda)))/etc/profile.d/conda.sh
+#source $condapath
+#conda activate kpum_wsl
+#conda activate OpenMAP-Di
+
 # then we run OpenMAP-Di's parcellate_neonatal_brain.py
 python $openmap_path/parcellate_neonatal_brain.py  -i $openmap_folder -o $openmap_folder -m $openmap_path/nnUNetTrainerNoMirroring__nnUNetPlans__3d_fullres -device $device
