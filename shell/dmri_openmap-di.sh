@@ -18,7 +18,7 @@ Options:
   -d / -datadir         Derivatives folder (default: \$studydir/derivatives/dMRI/sub-sID/ses-ssID/dwi)
   -dwi                  Preprocessed and intensity normalised dMRI in .mif format (default: \$datadir/sub-sID_ses-ssID_dir-AP_desc-preproc-inorm_dwi.mif)
   -mask                 Brain mask in .mif format (default: \$derivatives/\$subjectdata/sub-sID_ses-ssID_space-dwi_mask.mif)
-  -openmap_path         Path to OpenMap-Di installation (default: $HOME/Software/OpenMAP-Di)  
+  -openmap_path         Path to OpenMap-Di installation (default: $HOME/software/OpenMAP-Di)  
   -device               Device for OpenMAP-Di (defalt: cpu)
   -t / -threads         Number of threads for MRtrix commands (default: 4)
   -h / -help / --help   Print usage.
@@ -40,7 +40,7 @@ currdir=$PWD
 # Defaults
 datadir=$studydir/derivatives/dMRI/sub-$sID/ses-$ssID/dwi
 dwi=""; mask=""  # See below - Defaults cont'd
-openmap_path=$HOME/Software/OpenMAP-Di
+openmap_path=$HOME/software/OpenMAP-Di
 device=cpu
 threads=4
 
