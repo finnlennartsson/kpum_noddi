@@ -40,12 +40,12 @@ codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 currdir=$PWD
 
 while [ $# -gt 0 ]; do
-    case "$1" in
-	-T2) shift; t2w=$1; ;;
-	-d|-data-dir)  shift; datadir=$1; ;;
-	-h|-help|--help) usage; ;;
-	-*) echo "$0: Unrecognized option $1" >&2; usage; ;;
-	*) break ;;
+  case "$1" in
+	  -T2) shift; t2w=$1; ;;
+	  -d|-datadir)  shift; datadir=$1; ;;
+	  -h|-help|--help) usage; ;;
+	  -*) echo "$0: Unrecognized option $1" >&2; usage; ;;
+	  *) break ;;
     esac
     shift
 done
@@ -129,9 +129,8 @@ cd $currdir
 cd $datadir/anat
 
 if [ ! -f sub-${sID}_ses-${ssID}_space-T2w_mask.nii ];then
-    
     # bet T2w using -F flag
-    bet ${t2w}.nii ${t2w}_brain.nii -m -R -F #f 0.3
+    bet preproc${t2w}.nii ${t2w}_brain.nii -m -R -F #f 0.3
     mv ${t2w}_brain_mask.nii sub-${sID}_ses-${ssID}_space-T2w_mask.nii
 
     # Clean-up
