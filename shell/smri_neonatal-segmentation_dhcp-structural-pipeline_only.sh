@@ -13,13 +13,14 @@ usage()
     Usage: $base sID ssID age studydir
     Options:
         -T2     T2 image in .nii format (default: \$datadir/anat/sub-sID_ses-ssID_desc-preproc_T2w.nii)
-        -d / -data-dir  <directory>      The directory in \$studydir used to output files in (default: derivatives/dMRI/sub-sID/ses-ssID)
+        -d / -data-dir  <directory>      The directory in \$studydir used to output files in (default: \$studydir/derivatives/dMRI/sub-sID/ses-ssID)
         -t / -threads       Number of CPU cores/threads to run commands in (default: 4)
         -h / -help / --help     Print usage.
     "
     exit 1
 }
 
+[ $# -ge 4 ] || { usage; }
 # Input arguments
 sID=$1
 ssID=$2
@@ -32,6 +33,7 @@ currdir=$PWD
 
 # Defaults
 datadir=$studydir/derivatives/dMRI/sub-$sID/ses-$ssID
+threads=10
 
 while [ $# -gt 0 ]; do
     case "$1" in
