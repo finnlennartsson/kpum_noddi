@@ -1,1 +1,3 @@
+# Running OpenMAP
 for sub in `ls -d derivatives/dMRI_op/sub-003 | sed 's/derivatives\/dMRI\_op\/sub\-//' `; do bash ~/Code/kpum_noddi/shell/dmri_openmap-di.sh $sub MR1 $PWD -data-dir $PWD/derivatives/dMRI_op/sub-$sub/ses-MR1/dwi -openmap_path ~/Software/OpenMAP-Di; done
+

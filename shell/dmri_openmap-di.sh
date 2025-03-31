@@ -170,10 +170,10 @@ while IFS=$'\t' read -r label region _; do
 
     # Calculate stats for each DTI map using the temporary mask
     echo "Calculating DTI stats for label $label ($region)"
-    fa_stats=$(mrstats -mask "$temp_mask" "$dti_folder/${dwibase}_dwi_FA.nii" | awk 'NR==2 {print $4, $6}')
-    md_stats=$(mrstats -mask "$temp_mask" "$dti_folder/${dwibase}_dwi_MD.nii" | awk 'NR==2 {print $4, $6}')
-    ad_stats=$(mrstats -mask "$temp_mask" "$dti_folder/${dwibase}_dwi_AD.nii" | awk 'NR==2 {print $4, $6}')
-    rd_stats=$(mrstats -mask "$temp_mask" "$dti_folder/${dwibase}_dwi_RD.nii" | awk 'NR==2 {print $4, $6}')
+    fa_stats=$(mrstats -mask "$temp_mask" "$dti_folder/${dwibase}_dwi_FA.nii" | awk 'NR==2 {print $4, $6}' | sed 's/\ /\t/')
+    md_stats=$(mrstats -mask "$temp_mask" "$dti_folder/${dwibase}_dwi_MD.nii" | awk 'NR==2 {print $4, $6}' | sed 's/\ /\t/')
+    ad_stats=$(mrstats -mask "$temp_mask" "$dti_folder/${dwibase}_dwi_AD.nii" | awk 'NR==2 {print $4, $6}' | sed 's/\ /\t/')
+    rd_stats=$(mrstats -mask "$temp_mask" "$dti_folder/${dwibase}_dwi_RD.nii" | awk 'NR==2 {print $4, $6}' | sed 's/\ /\t/')
 
     # Append the stats to the TSV file
     echo -e "$label\t$region\t$fa_stats\t$md_stats\t$ad_stats\t$rd_stats" >> "$output_tsv"
@@ -215,3 +215,6 @@ echo "DTI stats saved to $output_tsv and $output_json"
 else
   echo "DTI stats already calculated for this subject"
 fi
+
+# 3.2. DKI
+
