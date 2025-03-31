@@ -155,34 +155,61 @@ lut_file="$openmap_path/neonate_multilevel_lookup_table_170labels_v2.txt"
 output_tsv="$dti_folder/${dwibase}_dti_stats.tsv"
 output_json="$dti_folder/${dwibase}_dti_stats.json"
 
+# Input files for DTI parametric maps FA, MD, AD and RD
+fafile=`ls $dti_folder/${dwibase}_dwi_FA.nii`
+if [ -z "$fafile" ]; then
+  echo "FA file not found"
+  exit 1
+fi
+mdfile=`ls $dti_folder/${dwibase}_dwi_MD.nii`
+if [ -z "$mdfile" ]; then
+  echo "MD file not found"
+  exit 1
+fi
+adfile=`ls $dti_folder/${dwibase}_dwi_AD.nii`
+if [ -z "$adfile" ]; then
+  echo "AD file not found"
+  exit 1
+fi
+rdfile=`ls $dti_folder/${dwibase}_dwi_RD.nii`
+if [ -z "$rdfile" ]; then
+  echo "RD file not found"
+  exit 1
+fi
+
 if [ ! -f $output_tsv ]; then 
   echo "Calculating DTI stats..."
-# Initialize the TSV file with a header
-echo -e "Label\tRegion\tFA_mean\tFA_std\tMD_mean\tMD_std\tAD_mean\tAD_std\tRD_mean\tRD_std" > "$output_tsv"
+  # Initialize the TSV file with a header
+  echo -e "Label\tRegion\tFA_mean\tFA_std\tMD_mean\tMD_std\tAD_mean\tAD_std\tRD_mean\tRD_std" > "$output_tsv"
 
-# Loop through each label in the LUT
-while IFS=$'\t' read -r label region _; do
-  # Skip the header or invalid lines
-  if [[ "$label" =~ ^[0-9]+$ ]]; then
-    # Create a temporary binary mask for the current label
-    temp_mask="$dti_folder/temp_mask_label_${label}.mif"
-    mrcalc "$segmentation_file" "$label" -eq "$temp_mask" -quiet
+  # Loop through each label in the LUT
+  while IFS=$'\t' read -r label region _; do
+    # Skip the header or invalid lines
+    if [[ "$label" =~ ^[0-9]+$ ]]; then
+      # Create a temporary binary mask for the current label
+      temp_mask="$dti_folder/temp_mask_label_${label}.mif"
+      mrcalc "$segmentation_file" "$label" -eq "$temp_mask" -quiet
 
-    # Calculate stats for each DTI map using the temporary mask
-    echo "Calculating DTI stats for label $label ($region)"
-    fa_stats=$(mrstats -mask "$temp_mask" "$dti_folder/${dwibase}_dwi_FA.nii" | awk 'NR==2 {print $4, $6}' | sed 's/\ /\t/')
-    md_stats=$(mrstats -mask "$temp_mask" "$dti_folder/${dwibase}_dwi_MD.nii" | awk 'NR==2 {print $4, $6}' | sed 's/\ /\t/')
-    ad_stats=$(mrstats -mask "$temp_mask" "$dti_folder/${dwibase}_dwi_AD.nii" | awk 'NR==2 {print $4, $6}' | sed 's/\ /\t/')
-    rd_stats=$(mrstats -mask "$temp_mask" "$dti_folder/${dwibase}_dwi_RD.nii" | awk 'NR==2 {print $4, $6}' | sed 's/\ /\t/')
+      # Calculate stats for each DTI map using the temporary mask
+      echo "Calculating DTI stats for label $label ($region)"
+      fa_stats=$(mrstats -mask "$temp_mask" "$fafile" | awk 'NR==2 {print $4, $6}' | sed 's/\ /\t/')
+      md_stats=$(mrstats -mask "$temp_mask" "$mdfile" | awk 'NR==2 {print $4, $6}' | sed 's/\ /\t/')
+      ad_stats=$(mrstats -mask "$temp_mask" "$adfile" | awk 'NR==2 {print $4, $6}' | sed 's/\ /\t/')
+      rd_stats=$(mrstats -mask "$temp_mask" "$rdfile" | awk 'NR==2 {print $4, $6}' | sed 's/\ /\t/')
 
-    # Append the stats to the TSV file
-    echo -e "$label\t$region\t$fa_stats\t$md_stats\t$ad_stats\t$rd_stats" >> "$output_tsv"
+      # Append the stats to the TSV file
+      echo -e "$label\t$region\t$fa_stats\t$md_stats\t$ad_stats\t$rd_stats" >> "$output_tsv"
 
-    # Remove the temporary mask
-    rm -f "$temp_mask"
-  fi
-done < <(tail -n +2 "$lut_file")  # Skip the header of the LUT file
+      # Remove the temporary mask
+      rm -f "$temp_mask"
+    fi
+  done < <(tail -n +2 "$lut_file")  # Skip the header of the LUT file
+else
+  echo "DTI stats already calculated for this subject and saved in $output_tsv"
+fi
 
+if [ ! -f $output_json ]; then
+  echo "Converting DTI stats to JSON format..."
 # Convert the TSV to JSON format
 python3 - <<EOF
 import pandas as pd
@@ -199,6 +226,14 @@ units = {
     "RD": "mm^2/s"
 }
 
+# Add file names used for mrstats
+file_names = {
+    "FA": "$fafile",
+    "MD": "$mdfile",
+    "AD": "$adfile",
+    "RD": "$rdfile"
+}
+
 # Convert to JSON
 json_output = {
     "data": df.to_dict(orient="records"),
@@ -211,15 +246,30 @@ with open("$output_json", "w") as f:
 EOF
 
 echo "DTI stats saved to $output_tsv and $output_json"
-
-else
-  echo "DTI stats already calculated for this subject"
 fi
+
 
 # 3.2. DKI
 dki_folder=$datadir/dki
 output_tsv_dki="$dki_folder/${dwibase}_dki_stats.tsv"
 output_json_dki="$dki_folder/${dwibase}_dki_stats.json"
+
+# DKI parametric maps MK, AK and RK
+mkfile=`ls $dki_folder/${dwibase}_dwi_mk.nii`
+if [ -z "$mkfile" ]; then
+  echo "MK file not found"
+  exit 1
+fi
+akfile=`ls $dki_folder/${dwibase}_dwi_ak.nii`
+if [ -z "$akfile" ]; then
+  echo "AK file not found"
+  exit 1
+fi
+rkfile=`ls $dki_folder/${dwibase}_dwi_rk.nii`
+if [ -z "$rkfile" ]; then
+  echo "RK file not found"
+  exit 1
+fi
 
 if [ ! -f $output_tsv_dki ]; then
   echo "Calculating DKI stats..."
@@ -237,9 +287,9 @@ if [ ! -f $output_tsv_dki ]; then
 
       # Calculate stats for each DKI map using the temporary mask
       echo "Calculating DKI stats for label $label ($region)"
-      mk_stats=$(mrstats -mask "$temp_mask" "$dki_folder/${dwibase}_dwi_MK.nii" | awk 'NR==2 {print $4, $6}' | sed 's/\ /\t/')
-      ak_stats=$(mrstats -mask "$temp_mask" "$dki_folder/${dwibase}_dwi_AK.nii" | awk 'NR==2 {print $4, $6}' | sed 's/\ /\t/')
-      rk_stats=$(mrstats -mask "$temp_mask" "$dki_folder/${dwibase}_dwi_RK.nii" | awk 'NR==2 {print $4, $6}' | sed 's/\ /\t/')
+      mk_stats=$(mrstats -mask "$temp_mask" "$mkfile" | awk 'NR==2 {print $4, $6}' | sed 's/\ /\t/')
+      ak_stats=$(mrstats -mask "$temp_mask" "$akfile" | awk 'NR==2 {print $4, $6}' | sed 's/\ /\t/')
+      rk_stats=$(mrstats -mask "$temp_mask" "$rkfile" | awk 'NR==2 {print $4, $6}' | sed 's/\ /\t/')
 
       # Append the stats to the TSV file
       echo -e "$label\t$region\t$mk_stats\t$ak_stats\t$rk_stats" >> "$output_tsv_dki"
@@ -248,7 +298,12 @@ if [ ! -f $output_tsv_dki ]; then
       rm -f "$temp_mask"
     fi
   done < <(tail -n +2 "$lut_file")  # Skip the header of the LUT file
-
+else
+  echo "DKI stats already calculated for this subject and saved in $output_tsv_dki"
+fi
+# Convert the TSV to JSON format
+if [ ! -f $output_json_dki ]; then
+  echo "Converting DKI stats to JSON format..."
   # Convert the TSV to JSON format
   python3 - <<EOF
 import pandas as pd
@@ -264,21 +319,27 @@ units = {
     "RK": "unitless"
 }
 
+# Add file names used for mrstats
+file_names = {
+    "MK": "$mkfile",
+    "AK": "$akfile",
+    "RK": "$rkfile"
+}
+
 # Convert to JSON
 json_output = {
     "data": df.to_dict(orient="records"),
-    "units": units
+    "units": units,
+    "file_names": file_names
 }
 
 # Save JSON to file
 with open("$output_json_dki", "w") as f:
     json.dump(json_output, f, indent=4)
 EOF
-
   echo "DKI stats saved to $output_tsv_dki and $output_json_dki"
-
 else
-  echo "DKI stats already calculated for this subject"
+  echo "DKI stats already calculated for this subject and saved in $output_json_dki"
 fi
 
 
@@ -286,6 +347,23 @@ fi
 noddi_folder=$datadir/noddi
 output_tsv_noddi="$noddi_folder/${dwibase}_noddi_stats.tsv"
 output_json_noddi="$noddi_folder/${dwibase}_noddi_stats.json"
+
+# NODDI parametric maps NDI, ODI and FWF
+ndifile=`ls $noddi_folder/${dwibase}_*ICVF.nii`
+if [ -z "$ndifile" ]; then
+  echo "NODDI file not found for label $label"
+  exit 1
+fi  
+odifile=`ls $noddi_folder/${dwibase}_*OD.nii`
+if [ -z "$odifile" ]; then
+  echo "ODI file not found for label $label"
+  exit 1
+fi  
+fwffile=`ls $noddi_folder/${dwibase}_*ISOVF.nii`
+if [ -z "$fwffile" ]; then
+  echo "FWF file not found for label $label"
+  exit 1
+fi  
 
 if [ ! -f $output_tsv_noddi ]; then
   echo "Calculating NODDI stats..."
@@ -303,23 +381,8 @@ if [ ! -f $output_tsv_noddi ]; then
 
       # Calculate stats for each NODDI map using the temporary mask
       echo "Calculating NODDI stats for label $label ($region)"
-      ndifile=`ls $noddi_folder/${dwibase}_*ICVF.nii`
-      if [ -z "$ndifile" ]; then
-        echo "NODDI file not found for label $label"
-        continue
-      fi
       ndi_stats=$(mrstats -mask "$temp_mask" "$ndifile" | awk 'NR==2 {print $4, $6}' | sed 's/\ /\t/')
-      odifile=`ls $noddi_folder/${dwibase}_*OD.nii`
-      if [ -z "$odifile" ]; then
-        echo "ODI file not found for label $label"
-        continue
-      fi
       odi_stats=$(mrstats -mask "$temp_mask" "$odifile" | awk 'NR==2 {print $4, $6}' | sed 's/\ /\t/')
-      fwffile=`ls $noddi_folder/${dwibase}_*ISOVF.nii`
-      if [ -z "$fwffile" ]; then
-        echo "FWF file not found for label $label"
-        continue
-      fi
       fwf_stats=$(mrstats -mask "$temp_mask" "$fwffile" | awk 'NR==2 {print $4, $6}' | sed 's/\ /\t/')
 
       # Append the stats to the TSV file
@@ -329,7 +392,12 @@ if [ ! -f $output_tsv_noddi ]; then
       rm -f "$temp_mask"
     fi
   done < <(tail -n +2 "$lut_file")  # Skip the header of the LUT file
+else
+  echo "NODDI stats already calculated for this subject and saved in $output_tsv_noddi"
+fi
 
+if [ ! -f $output_json_noddi ]; then
+  echo "Converting NODDI stats to JSON format..."
   # Convert the TSV to JSON format
   python3 - <<EOF
 import pandas as pd
@@ -345,10 +413,18 @@ units = {
     "FWF": "unitless"
 }
 
+# Add file names used for mrstats
+file_names = {
+    "NDI": "$ndifile",
+    "ODI": "$odifile",
+    "FWF": "$fwffile"
+}
+
 # Convert to JSON
 json_output = {
     "data": df.to_dict(orient="records"),
-    "units": units
+    "units": units,
+    "file_names": file_names
 }
 
 # Save JSON to file
@@ -359,6 +435,6 @@ EOF
   echo "NODDI stats saved to $output_tsv_noddi and $output_json_noddi"
 
 else
-  echo "NODDI stats already calculated for this subject"
+  echo "NODDI stats already calculated for this subject and saved in $output_json_noddi"
 fi
 
