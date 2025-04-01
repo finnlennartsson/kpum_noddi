@@ -71,8 +71,8 @@ if [ $mask=="" ]; then
 fi
 
 # Check if images exist, else put in No_image
-if [ ! -f $dwi ]; then dwi="No_image"; echo "No_image - quitting"; break; fi
-if [ ! -f $mask ]; then mask="No_image"; echo "No_image - quitting"; break; fi
+if [ ! -f $dwi ]; then dwi="No_image"; echo "No_image - quitting"; exit 1; fi
+if [ ! -f $mask ]; then mask="No_image"; echo "No_image - quitting"; exit 1; fi
 
 echo "NODDI estimation
 ----------------------------
