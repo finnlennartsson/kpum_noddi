@@ -237,7 +237,8 @@ file_names = {
 # Convert to JSON
 json_output = {
     "data": df.to_dict(orient="records"),
-    "units": units
+    "units": units,
+    "file_names": file_names
 }
 
 # Save JSON to file
