@@ -1,7 +1,7 @@
 #!/bin/bash
 # KPUM NODDI
 # Script for QC eye-balling of output generated in dmri_dtidkinoddi_pipeline
-# Updates Subject_Tracker_dmri_dtidkinoddi_pipeline.tsv file
+# Creates $datadir/session_QC.tsv for book-keeping
 #
 
 ################ SUB-FUNCTIONS ################
@@ -11,6 +11,7 @@ usage()
   base=$(basename "$0")
   echo "usage: $base sID ssID studydir derivatives [options]
 Visualize selected output in dmri_dtidkinoddi_pipeline for QC evaluation
+Creates \$datadir/session_QC.tsv for QC book-keeping
 
 Arguments:
   sID                   Subject ID (e.g. 002) 
@@ -76,6 +77,16 @@ echo
 
 ################ START ################
 
+
+# Create $datadir/session_QC.tsv file is not present
+cd $datadir
+if [ ! -f session_QC.tsv ]; then
+	echo "Creating $datadir/session_QC.tsv for QC according to $BASH_SOURCE"
+	echo -e "participant_id\tsession_id\tqc_PREPROC_pass_fail\tqc_OPENMAP-DI_pass_fail\tqc_DTI_pass_fail\tqc_DKI_pass_fail\tqc_NODDI_pass_fail\tqc_REGISTRATION_pass_fail\tqc_TRACTOGRAPHY_pass_fail\tqc_signature" > session_QC.tsv
+	echo -e "sub-$sID\tses-$ssID\t0/1\t0/1\t0/1\t0/1\t0/1\t0/1\t0/1\tFL/KA" >> session_QC.tsv	
+fi 
+cd $studydir
+
 #######################################
 # Preprocess
 echo "############## QC of Process: Preprocess
@@ -120,6 +131,11 @@ done
 echo
 
 cd $studydir
+#######################################
+
+#######################################
+# OpenMAP-Di segmentation 
+
 #######################################
 
 
@@ -174,3 +190,7 @@ cd $studydir
 #######################################
 
 
+#######################################
+# Tractography 
+
+#######################################
