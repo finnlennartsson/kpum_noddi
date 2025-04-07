@@ -17,7 +17,7 @@ Arguments:
   sID                   Subject ID (e.g. 002) 
   ssID                  Session ID (e.g. MR2)
   studydir              Studydir with full path (e.g. \$PWD or /mnt/e/Finn/KPUM_NODDI/Data)
-  derivatives		Derivatives folder in \$studydir (e.g. derivatives/dMRI_op)				
+  derivatives			Derivatives folder in \$studydir (e.g. derivatives/dMRI_op)				
 Options:
   -h / -help / --help   Print usage.
 "
@@ -66,7 +66,7 @@ echo "QC of dmri_dtidkinoddi_pipeline
 ----------------------------
 Subject:       	$sID 
 Session:        $ssID
-Studydir:	$studydir
+Studydir:		$studydir
 Derivatives: 	$derivatives
 DataDirectory:	$datadir
 

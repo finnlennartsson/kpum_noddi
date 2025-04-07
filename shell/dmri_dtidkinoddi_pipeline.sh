@@ -190,6 +190,37 @@ echo
 ######################################################################################################
 
 ######################################################################################################
+## Process to perform - dmri_openmap-di
+if ssID == "MR1"; then
+  # We only run OpenMAP-Di for the first session
+
+  process=dmri_openmap-di
+  processfile=$process.sh
+  # input to process
+  subjectdata=sub-${sID}/ses-${ssID}/dwi
+  dwi=$derivatives/$subjectdata/sub-${sID}_ses-${ssID}_dir-AP_desc-preproc-inorm_dwi.mif
+  mask=$derivatives/$subjectdata/sub-${sID}_ses-${ssID}_space-dwi_mask.mif
+  # Run processfile
+  echo "START - $process"
+  starttime=$SECONDS
+  bash $codedir/$processfile $sID $ssID $studydir -derivatives $derivatives -subjectdata $subjectdata -dwi $dwi -mask $mask -dPar $dPar -t $threads;
+  endtime=$SECONDS
+  echo "END - $process"
+  # Print timing
+  runtime_s=$(($endtime - $starttime)); 
+  runtime_m=$(printf %.3f $(echo "$runtime_s/60" | bc -l));
+  echo "Runtime was $runtime_m [min]"
+  # update tsv-list
+  tsvprocesslistupdated=`echo -e "$tsvprocesslist\t$process"` 
+  tsvprocesslist=$tsvprocesslistupdated
+else
+  echo "OpenMAP-Di is not run for session $ssID"
+  exit;
+fi
+
+######################################################################################################
+
+######################################################################################################
 # Finish by stating how long it took
 endTotal=$SECONDS
 runtime_s=$(($endTotal - $startTotal)); 
