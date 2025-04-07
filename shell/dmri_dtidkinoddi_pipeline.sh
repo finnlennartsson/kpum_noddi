@@ -14,7 +14,8 @@ Arguments:
 Options:
   -derivatives <directory>      The base derivatives directory (default: \$studydir/derivatives/dMRI)
   -tsv                          Subject tracker tsv-file (default: \$derivatives/Subject_Tracker_for_\$scriptname.tsv)
-  -p / protocol                 MRI protocol used in study [ORIG/NEW] (default: ORIG) 
+  -p / protocol                 MRI protocol used in study [ORIG/NEW] (default: ORIG)
+  -openmap_path <directory>     Path to OpenMAP-Di (default: /home/radio/software/OpenMAP-Di) 
   -dPar                         Parallel diffusivity for the NODDI model (default: 0.0017)
   -t / -threads                 Number of CPU threads (default: 4) 
   -h / -help / --help           Print usage.
@@ -35,6 +36,7 @@ currdir=$PWD
 # Defaults
 protocol=ORIG
 derivatives=$studydir/derivatives/dMRI
+openmap_path=/home/radio/software/OpenMAP-Di
 dPar=0.0017
 threads=4
 
@@ -47,6 +49,7 @@ while [ $# -gt 0 ]; do
     -tsv)  shift; tsvfile=$1; ;;
     -p|-protocol)  shift; protocol=$1; ;;
     -derivatives)  shift; derivatives=$1; ;;
+    -openmap_path)  shift; openmap_path=$1; ;;
     -dPar)  shift; dPar=$1; ;;
     -t|-threads)  shift; threads=$1; ;;
     -h|-help|--help) usage; ;;
@@ -197,13 +200,11 @@ if ssID == "MR1"; then
   process=dmri_openmap-di
   processfile=$process.sh
   # input to process
-  subjectdata=sub-${sID}/ses-${ssID}/dwi
-  dwi=$derivatives/$subjectdata/sub-${sID}_ses-${ssID}_dir-AP_desc-preproc-inorm_dwi.mif
-  mask=$derivatives/$subjectdata/sub-${sID}_ses-${ssID}_space-dwi_mask.mif
+ 
   # Run processfile
   echo "START - $process"
   starttime=$SECONDS
-  bash $codedir/$processfile $sID $ssID $studydir -derivatives $derivatives -subjectdata $subjectdata -dwi $dwi -mask $mask -dPar $dPar -t $threads;
+  bash $codedir/$processfile $sID $ssID $studydir -data-dir $datadir/dwi -openmap_path -t $threads;
   endtime=$SECONDS
   echo "END - $process"
   # Print timing
