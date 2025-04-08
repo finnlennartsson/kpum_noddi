@@ -194,7 +194,7 @@ echo
 
 ######################################################################################################
 ## Process to perform - dmri_openmap-di
-if ssID == "MR1"; then
+if $ssID == "MR1"; then
   # We only run OpenMAP-Di for the first session
 
   process=dmri_openmap-di
