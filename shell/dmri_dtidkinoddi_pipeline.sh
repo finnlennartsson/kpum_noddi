@@ -203,9 +203,9 @@ starttime=$SECONDS
 if [ $ssID == "MR1" ]; then
   # We only run OpenMAP-Di for the first session
   # input to process
-
+  device=cpu
   # Run processfile
-  bash $codedir/$processfile $sID $ssID $studydir -data-dir $datadir/dwi -openmap_path $openmap_path -t $threads;
+  bash $codedir/$processfile $sID $ssID $studydir -data-dir $datadir/dwi -openmap_path $openmap_path -device $device -t $threads;
   # update tsv-list
   tsvprocesslistupdated=`echo -e "$tsvprocesslist\t$process"` 
   tsvprocesslist=$tsvprocesslistupdated
