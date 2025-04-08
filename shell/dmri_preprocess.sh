@@ -167,25 +167,36 @@ if [ ! $sessionfile == No_sessionfile ]; then
 					esac
 
 				fi
-			fi		
-			## b0AP and b0PA data
-			volb0AP=`echo "$line" | awk '{ print $8 }'` #(dMRI_vol_for_b0AP = 8th column)
-			if [ ! $volb0AP == "-" ]; then
-				b0APvol=$volb0AP #Remember this to later!!
-				if [ ! -f $datadir/dwi/preproc/topup/b0AP.mif ]; then
-				mrconvert $datadir/$filedir/$filebase.nii -json_import $datadir/$filedir/$filebase.json - | \
-					mrconvert -coord 3 $volb0AP -axes 0,1,2 - $datadir/dwi/preproc/topup/b0AP.mif
-				fi
-			fi
-			volb0PA=`echo "$line" | awk '{ print $9 }'` #(dMRI_vol_for_b0PA = 9th column)
-			if [ ! $volb0PA == "-" ]; then
-				if [ ! -f $datadir/dwi/preproc/topup/b0PA.mif ]; then
-					#Finn 2023-03-31: change to extract one volb0PA, which was not done in ORIG
-					mrconvert $datadir/$filedir/$filebase.nii -json_import $datadir/$filedir/$filebase.json - | \
-					mrconvert -coord 3 $volb0PA -axes 0,1,2 - $datadir/dwi/preproc/topup/b0PA.mif
-					#ORIG mrconvert $datadir/$filedir/$filebase.nii -json_import $datadir/$filedir/$filebase.json $datadir/dwi/preproc/topup/b0PA.mif
-				fi
-			fi
+			fi	
+			case $protocol in 
+				NEW) # We have NEW protocol and can use all our b0s
+					echo "We have NEW protocol"
+					echo "We can use TOPUP and should sort out b0AP and b0PA"
+					## b0AP and b0PA data
+					volb0AP=`echo "$line" | awk '{ print $8 }'` #(dMRI_vol_for_b0AP = 8th column)
+					if [ ! $volb0AP == "-" ]; then
+						b0APvol=$volb0AP #Remember this to later!!
+						if [ ! -f $datadir/dwi/preproc/topup/b0AP.mif ]; then
+						mrconvert $datadir/$filedir/$filebase.nii -json_import $datadir/$filedir/$filebase.json - | \
+							mrconvert -coord 3 $volb0AP -axes 0,1,2 - $datadir/dwi/preproc/topup/b0AP.mif
+						fi
+					fi
+					volb0PA=`echo "$line" | awk '{ print $9 }'` #(dMRI_vol_for_b0PA = 9th column)
+					if [ ! $volb0PA == "-" ]; then
+						if [ ! -f $datadir/dwi/preproc/topup/b0PA.mif ]; then
+							#Finn 2023-03-31: change to extract one volb0PA, which was not done in ORIG
+							mrconvert $datadir/$filedir/$filebase.nii -json_import $datadir/$filedir/$filebase.json - | \
+							mrconvert -coord 3 $volb0PA -axes 0,1,2 - $datadir/dwi/preproc/topup/b0PA.mif
+							#ORIG mrconvert $datadir/$filedir/$filebase.nii -json_import $datadir/$filedir/$filebase.json $datadir/dwi/preproc/topup/b0PA.mif
+						fi
+					fi
+					;;
+				ORIG) # We have ORIG protocol only and cannot use TOPUP
+					echo "We have ORIG protocol"
+					echo "We cannot use TOPUP and will not transfer/create any b0-files to $datadir/dwi/preproc/topup"
+					;;
+			esac
+
 	    fi
 	    
 	done
@@ -203,33 +214,39 @@ else
     fi
 fi
 
-exit 1
-
 ##################################################################################
 # 1b. Create dwi.mif $datadir/dwi/preproc and b0APPA.mif in $datadir/dwi/preproc/topup
 
 cd $datadir/dwi/preproc
 
-if [ ! -d topup ]; then mkdir topup; fi
-
-# Create b0APPA.mif to go into TOPUP
-if [ ! -f topup/b0APPA.mif ]; then
-    if [ -f topup/b0AP.mif ] && [ -f topup/b0PA.mif ]; then
-	echo "Creating b0APPA.mif from b0AP.mif and b0PA.mif"
-	mrcat topup/b0AP.mif topup/b0PA.mif topup/b0APPA.mif
-    else
-	if [ -f topup/b0AP.mif ] && [ ! -f topup/b0PA.mif ]; then
-	    echo "We only have b0AP.mif in /topup => do not have a fieldmap, so eddy will be run without a TOPUP fieldmap"
-	else	
-	    echo "No b0APPA.mif or pair of b0AP.mif and b0PA.mif are present to use with TOPUP
-	          1. Do this by putting one good b0 from dir-AP_dwi and dir-PA_dwi into a file b0APPA.mif into $datadir/dwi/preproc/topup
-			  2. The same b0 from dir-AP_dwi should be put 1st in the dir-AP_dwi dataset, as dwifslpreprocess will use the 1st b0 in dir-AP and replace the first b0 in b0APPA with
-			  3. Run this script again.     
-    	 	  "
-	    exit;
-	fi
-    fi
-fi
+case $protocol in
+	NEW) # We have NEW protocol and can use all our b0s
+		echo "We have NEW protocol"
+		if [ ! -d topup ]; then mkdir topup; fi
+		# Create b0APPA.mif to go into TOPUP
+		if [ ! -f topup/b0APPA.mif ]; then
+			if [ -f topup/b0AP.mif ] && [ -f topup/b0PA.mif ]; then
+				echo "Creating b0APPA.mif from b0AP.mif and b0PA.mif"
+				mrcat topup/b0AP.mif topup/b0PA.mif topup/b0APPA.mif
+				else
+				if [ -f topup/b0AP.mif ] && [ ! -f topup/b0PA.mif ]; then
+					echo "We only have b0AP.mif in /topup => do not have a fieldmap, so eddy will be run without a TOPUP fieldmap"
+				else	
+					echo "No b0APPA.mif or pair of b0AP.mif and b0PA.mif are present to use with TOPUP
+						1. Do this by putting one good b0 from dir-AP_dwi and dir-PA_dwi into a file b0APPA.mif into $datadir/dwi/preproc/topup
+						2. The same b0 from dir-AP_dwi should be put 1st in the dir-AP_dwi dataset, as dwifslpreprocess will use the 1st b0 in dir-AP and replace the first b0 in b0APPA with
+						3. Run this script again.     
+						"
+					exit;
+				fi
+			fi
+		fi
+		;;
+	ORIG) # We have ORIG protocol only and cannot use TOPUP
+		echo "We have ORIG protocol"
+		echo "We cannot use TOPUP and will not transfer/create any b0-files to $datadir/dwi/preproc/topup"
+		;;
+esac
 
 # Create dwi.mif to go into further processing. NOTE: b0APvol will be put first in dwi.mif
 # This code snippet has been adapted from https://github.com/sotnir/NENAH-BIDS/blob/main/dMRI/preprocess.sh
