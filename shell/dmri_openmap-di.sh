@@ -52,7 +52,7 @@ while [ $# -gt 0 ]; do
 	  -dwi) shift; dwi=$1; ;;
 	  -mask) shift; mask=$1; ;;
     -openmap_path) shift; openmap_path=$1; ;;
-    -device) shift; device=1; ;;
+    -device) shift; device=$1; ;;
 	  -t|-threads) shift; threads=$1; ;;
 	  -d|-data-dir)  shift; datadir=$1; ;;
 	  -h|-help|--help) usage; ;;
