@@ -194,30 +194,30 @@ echo
 
 ######################################################################################################
 ## Process to perform - dmri_openmap-di
-if $ssID == "MR1"; then
-  # We only run OpenMAP-Di for the first session
+process=dmri_openmap-di
+processfile=$process.sh
+echo "START - $process"
 
-  process=dmri_openmap-di
-  processfile=$process.sh
-  # input to process
+starttime=$SECONDS
  
+if [ $ssID == "MR1" ]; then
+  # We only run OpenMAP-Di for the first session
+  # input to process
+
   # Run processfile
-  echo "START - $process"
-  starttime=$SECONDS
-  bash $codedir/$processfile $sID $ssID $studydir -data-dir $datadir/dwi -openmap_path -t $threads;
-  endtime=$SECONDS
-  echo "END - $process"
-  # Print timing
-  runtime_s=$(($endtime - $starttime)); 
-  runtime_m=$(printf %.3f $(echo "$runtime_s/60" | bc -l));
-  echo "Runtime was $runtime_m [min]"
+  bash $codedir/$processfile $sID $ssID $studydir -data-dir $datadir/dwi -openmap_path $openmap_path -t $threads;
   # update tsv-list
   tsvprocesslistupdated=`echo -e "$tsvprocesslist\t$process"` 
   tsvprocesslist=$tsvprocesslistupdated
 else
   echo "OpenMAP-Di is not run for session $ssID"
-  exit;
 fi
+endtime=$SECONDS
+echo "END - $process"
+# Print timing
+runtime_s=$(($endtime - $starttime)); 
+runtime_m=$(printf %.3f $(echo "$runtime_s/60" | bc -l));
+echo "Runtime was $runtime_m [min]"
 
 ######################################################################################################
 
