@@ -135,57 +135,57 @@ if [ ! $sessionfile == No_sessionfile ]; then
 	    QCPass=`echo "$line" | awk '{ print $4 }'`
 
 	    if [[ $QCPass == 1 || $QCPass == 0.5 ]]; then
-		
-		# Get file from column nbr 3
-		file=`echo "$line" | awk '{ print $3 }'`
-		filebase=`basename $file .nii`
-		filedir=`dirname $file`
+			
+			# Get file from column nbr 3
+			file=`echo "$line" | awk '{ print $3 }'`
+			filebase=`basename $file .nii`
+			filedir=`dirname $file`
 
-		#### Read flags in session.tsv file with corresponding column index
-		## DKI AP data (dMRI_DKI = 6th column)
-		dwiAP=`echo "$line" | awk '{ print $6 }'`
-		if [ $dwiAP == 1 ]; then		    
-		    if [ ! -f $datadir/dwi/preproc/dwiAP.mif ]; then 
+			#### Read flags in session.tsv file with corresponding column index
+			## DKI AP data (dMRI_DKI = 6th column)
+			dwiAP=`echo "$line" | awk '{ print $6 }'`
+			if [ $dwiAP == 1 ]; then		    
+				if [ ! -f $datadir/dwi/preproc/dwiAP.mif ]; then 
 
-				case $protocol in
-					NEW) # We have NEW protocol and can use all our b0s
-				 		echo "We have NEW protocol"
-						mrconvert -json_import $datadir/$filedir/$filebase.json \
-							-fslgrad $datadir/$filedir/$filebase.bvec $datadir/$filedir/$filebase.bval \
-							$datadir/$filedir/$filebase.nii $datadir/dwi/preproc/dwiAP.mif
-						;;
-					ORIG) # We have ORIG protocol only use one b0
-				 		echo "We have ORIG protocol"
-						mrconvert -json_import $datadir/$filedir/$filebase.json \
-							-fslgrad $datadir/$filedir/$filebase.bvec $datadir/$filedir/$filebase.bval \
-							$datadir/$filedir/$filebase.nii $datadir/dwi/preproc/tmp_dwiAP.mif
-						dwiextract -shells 1000,2000 $datadir/dwi/preproc/tmp_dwiAP.mif $datadir/dwi/preproc/tmp_dwiAP_b1000b2000.mif
-						dwiextract -shells 0 $datadir/dwi/preproc/tmp_dwiAP.mif - | mrconvert -coord 3 0 -axes 0,1,2 - $datadir/dwi/preproc/tmp_dwiAP_b0.mif
-						mrcat -axis 3 $datadir/dwi/preproc/tmp_dwiAP_b0.mif $datadir/dwi/preproc/tmp_dwiAP_b1000b2000.mif $datadir/dwi/preproc/dwiAP.mif
-						rm $datadir/dwi/preproc/tmp_*
-						;;
-				esac
+					case $protocol in
+						NEW) # We have NEW protocol and can use all our b0s
+							echo "We have NEW protocol"
+							mrconvert -json_import $datadir/$filedir/$filebase.json \
+								-fslgrad $datadir/$filedir/$filebase.bvec $datadir/$filedir/$filebase.bval \
+								$datadir/$filedir/$filebase.nii $datadir/dwi/preproc/dwiAP.mif
+							;;
+						ORIG) # We have ORIG protocol only use one b0
+							echo "We have ORIG protocol"
+							mrconvert -json_import $datadir/$filedir/$filebase.json \
+								-fslgrad $datadir/$filedir/$filebase.bvec $datadir/$filedir/$filebase.bval \
+								$datadir/$filedir/$filebase.nii $datadir/dwi/preproc/tmp_dwiAP.mif
+							dwiextract -shells 1000,2000 $datadir/dwi/preproc/tmp_dwiAP.mif $datadir/dwi/preproc/tmp_dwiAP_b1000b2000.mif
+							dwiextract -shells 0 $datadir/dwi/preproc/tmp_dwiAP.mif - | mrconvert -coord 3 0 -axes 0,1,2 - $datadir/dwi/preproc/tmp_dwiAP_b0.mif
+							mrcat -axis 3 $datadir/dwi/preproc/tmp_dwiAP_b0.mif $datadir/dwi/preproc/tmp_dwiAP_b1000b2000.mif $datadir/dwi/preproc/dwiAP.mif
+							rm $datadir/dwi/preproc/tmp_*
+							;;
+					esac
 
-		    fi
-		fi		
-		## b0AP and b0PA data
-		volb0AP=`echo "$line" | awk '{ print $8 }'` #(dMRI_vol_for_b0AP = 8th column)
-		if [ ! $volb0AP == "-" ]; then
-		    b0APvol=$volb0AP #Remember this to later!!
-		    if [ ! -f $datadir/dwi/preproc/topup/b0AP.mif ]; then
-			mrconvert $datadir/$filedir/$filebase.nii -json_import $datadir/$filedir/$filebase.json - | \
-			    mrconvert -coord 3 $volb0AP -axes 0,1,2 - $datadir/dwi/preproc/topup/b0AP.mif
-		    fi
-		fi
-		volb0PA=`echo "$line" | awk '{ print $9 }'` #(dMRI_vol_for_b0PA = 9th column)
-		if [ ! $volb0PA == "-" ]; then
-		    if [ ! -f $datadir/dwi/preproc/topup/b0PA.mif ]; then
-			#Finn 2023-03-31: change to extract one volb0PA, which was not done in ORIG
-			mrconvert $datadir/$filedir/$filebase.nii -json_import $datadir/$filedir/$filebase.json - | \
-			    mrconvert -coord 3 $volb0PA -axes 0,1,2 - $datadir/dwi/preproc/topup/b0PA.mif
-			    #ORIG mrconvert $datadir/$filedir/$filebase.nii -json_import $datadir/$filedir/$filebase.json $datadir/dwi/preproc/topup/b0PA.mif
-		    fi
-		fi
+				fi
+			fi		
+			## b0AP and b0PA data
+			volb0AP=`echo "$line" | awk '{ print $8 }'` #(dMRI_vol_for_b0AP = 8th column)
+			if [ ! $volb0AP == "-" ]; then
+				b0APvol=$volb0AP #Remember this to later!!
+				if [ ! -f $datadir/dwi/preproc/topup/b0AP.mif ]; then
+				mrconvert $datadir/$filedir/$filebase.nii -json_import $datadir/$filedir/$filebase.json - | \
+					mrconvert -coord 3 $volb0AP -axes 0,1,2 - $datadir/dwi/preproc/topup/b0AP.mif
+				fi
+			fi
+			volb0PA=`echo "$line" | awk '{ print $9 }'` #(dMRI_vol_for_b0PA = 9th column)
+			if [ ! $volb0PA == "-" ]; then
+				if [ ! -f $datadir/dwi/preproc/topup/b0PA.mif ]; then
+					#Finn 2023-03-31: change to extract one volb0PA, which was not done in ORIG
+					mrconvert $datadir/$filedir/$filebase.nii -json_import $datadir/$filedir/$filebase.json - | \
+					mrconvert -coord 3 $volb0PA -axes 0,1,2 - $datadir/dwi/preproc/topup/b0PA.mif
+					#ORIG mrconvert $datadir/$filedir/$filebase.nii -json_import $datadir/$filedir/$filebase.json $datadir/dwi/preproc/topup/b0PA.mif
+				fi
+			fi
 	    fi
 	    
 	done
@@ -203,6 +203,7 @@ else
     fi
 fi
 
+exit 1
 
 ##################################################################################
 # 1b. Create dwi.mif $datadir/dwi/preproc and b0APPA.mif in $datadir/dwi/preproc/topup
