@@ -1,7 +1,7 @@
 #!/bin/bash
 # KPUM NODDI
 # Script for QC eye-balling of output generated in dmri_dtidkinoddi_pipeline
-# Creates $datadir/session_QC.tsv for book-keeping
+# Creates $datadir/sub-$sID_ses-$ssID_pipeline_QC.tsv for book-keeping
 #
 
 ################ SUB-FUNCTIONS ################
@@ -11,7 +11,7 @@ usage()
   base=$(basename "$0")
   echo "usage: $base sID ssID studydir derivatives [options]
 Visualize selected output in dmri_dtidkinoddi_pipeline for QC evaluation
-Creates \$datadir/session_QC.tsv for QC book-keeping
+Creates \$datadir/sub-\$sID_ses-\$ssID_pipeline_QC.tsv for QC book-keeping
 
 Arguments:
   sID                   Subject ID (e.g. 002) 
@@ -78,12 +78,12 @@ echo
 ################ START ################
 
 
-# Create $datadir/session_QC.tsv file is not present
+# Create $datadir/pipeline_QC.tsv file is not present
 cd $datadir
-if [ ! -f session_QC.tsv ]; then
-	echo "Creating $datadir/session_QC.tsv for QC according to $BASH_SOURCE"
-	echo -e "participant_id\tsession_id\tqc_PREPROC_pass_fail\tqc_OPENMAP-DI_pass_fail\tqc_DTI_pass_fail\tqc_DKI_pass_fail\tqc_NODDI_pass_fail\tqc_REGISTRATION_pass_fail\tqc_TRACTOGRAPHY_pass_fail\tqc_signature" > session_QC.tsv
-	echo -e "sub-$sID\tses-$ssID\t0/1\t0/1\t0/1\t0/1\t0/1\t0/1\t0/1\tFL/KA" >> session_QC.tsv	
+if [ ! -f sub-${sID}_ses-${ssID}_pipeline_QC.tsv ]; then
+	echo "Creating $datadir/sub-${sID}_ses-${ssID}_pipeline_QC.tsv for QC according to $BASH_SOURCE"
+	echo -e "participant_id\tsession_id\tqc_signature\tqc_PREPROC_pass_fail\tqc_PREPROC_comment\tqc_DTI_pass_fail\tqc_DTI_comment\tqc_DKI_pass_fail\tqc_DKI_comment\tqc_NODDI_pass_fail\tqc_NODDI_comment\tqc_OPENMAP-DI_pass_fail\tqc_OPENMAP-DI_comment\tqc_REGISTRATION_pass_fail\tqc_REGISTRATION_comment\tqc_TRACTOGRAPHY_pass_fail\tqc_TRACTOGRAPHY_comment" > sub-${sID}_ses-${ssID}_pipeline_QC.tsv
+	echo -e "sub-$sID\tses-$ssID\tFL/KA\t0/1\t\t0/1\t\t0/1\t\t0/1\t\t0/1\t\t0/1\t\t0/1\t\t0/1\t" >> sub-${sID}_ses-${ssID}_pipeline_QC.tsv
 fi 
 cd $studydir
 
@@ -112,6 +112,8 @@ echo "Check corrected dMRI, shell by shell, for residual motion, signal dropout,
 dMRI_visualisation $dwi;
 echo
 
+# POSSIBLY INCLUDE SQUAD HERE
+
 # Brain Mask (NOTE - dilated to ensure usage with ACT - Can be a problem for JHU-registration)
 dwi=dwi_den_unr_eddy.mif 
 echo "QC of BET Brain Mask (dilated to ensure usage with ACT - NOTE can be a problem for the JHU-registration)"
@@ -131,11 +133,6 @@ done
 echo
 
 cd $studydir
-#######################################
-
-#######################################
-# OpenMAP-Di segmentation 
-
 #######################################
 
 
@@ -178,6 +175,25 @@ for map in ICVF ISOVF OD; do
 	mrview ${dwibase}-*_$map.nii -mode 2
 done
 echo
+
+cd $studydir
+
+#######################################
+
+
+#######################################
+# OpenMAP-Di segmentation 
+echo "############## QC of Process: OpenMAP-Di
+"
+cd $datadir/dwi/OpenMAP-Di
+
+dwibase=sub-${sID}_ses-${ssID}_dir-AP_desc-preproc-inorm
+b0=${dwibase}_0000.nii.gz
+openmap_seg=${dwibase}_space-dwi_seg-JHU-MNI_dseg.nii.gz
+
+echo "QC of OpenMAP-Di segmentation"
+echo "OpenMAP-Di segmentation is overlaid on the b0 - check for consistency and misclassified voxels"
+mrview $b0 -overlay.load $openmap_seg -overlay.opacity 0.5 -overlay.interpolation 0 -mode 2
 
 cd $studydir
 
